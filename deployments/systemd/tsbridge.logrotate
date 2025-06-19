@@ -1,0 +1,14 @@
+/var/log/tsbridge/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 tsbridge tsbridge
+    sharedscripts
+    postrotate
+        # Send SIGHUP to tsbridge to reopen log files
+        systemctl reload tsbridge >/dev/null 2>&1 || true
+    endscript
+}

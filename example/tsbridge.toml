@@ -1,0 +1,51 @@
+# Example tsbridge configuration for Docker Compose demo
+
+[tailscale]
+# OAuth credentials are provided via environment variables
+oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
+oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
+# OAuth tags are REQUIRED when using OAuth authentication
+oauth_tags = ["tag:server"]
+state_dir = "/var/lib/tsbridge"
+
+[global]
+# Timeouts
+read_timeout = "30s"
+write_timeout = "30s"
+idle_timeout = "120s"
+shutdown_timeout = "15s"
+
+# Retry configuration
+retry_count = 5
+retry_delay = "2s"
+
+# Whois configuration
+whois_timeout = "1s"
+
+# Enable metrics
+metrics_addr = ":9090"
+
+# Enable access logging
+access_log = true
+
+# API service
+[[services]]
+name = "demo-api"
+backend_addr = "api-backend:8080"
+whois_enabled = true
+whois_timeout = "500ms"
+
+# Web service
+[[services]]
+name = "demo-web"
+backend_addr = "web-backend:8081"
+whois_enabled = true
+
+# Example of a service with custom timeouts
+[[services]]
+name = "demo-slow"
+backend_addr = "api-backend:8080"
+whois_enabled = false
+read_timeout = "60s"
+write_timeout = "60s"
+retry_count = 3

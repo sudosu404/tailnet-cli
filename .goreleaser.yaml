@@ -1,0 +1,71 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: tsbridge
+    main: ./cmd/tsbridge
+    binary: tsbridge
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.gitCommit={{.ShortCommit}} -X main.buildDate={{.Date}}
+    flags:
+      - -trimpath
+
+archives:
+  - id: tsbridge
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz, zip]
+    files:
+      - LICENSE
+      - README.md
+
+dockers:
+  - image_templates:
+      - "ghcr.io/jtdowney/tsbridge:{{ .Tag }}"
+      - "ghcr.io/jtdowney/tsbridge:latest"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Tailscale-based reverse proxy manager"
+      - "--label=org.opencontainers.image.url=https://github.com/jtdowney/tsbridge"
+      - "--label=org.opencontainers.image.source=https://github.com/jtdowney/tsbridge"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+
+release:
+  github:
+    owner: jtdowney
+    name: tsbridge
+  draft: false
+  prerelease: auto
+  name_template: "{{ .Tag }}"

@@ -1,0 +1,279 @@
+# tsbridge
+
+A lightweight proxy manager built on Tailscale's tsnet library that enables multiple HTTPS services on a Tailnet via a single TOML configuration file.
+
+## Features
+
+- **Single Binary**: Easy deployment with no external dependencies
+- **Multi-Service Support**: Run multiple named services from one process
+- **Automatic HTTPS**: TLS certificates managed automatically by Tailscale
+- **Flexible Backends**: Proxy to TCP ports or Unix sockets
+- **Identity Headers**: Optional Tailscale identity header injection
+- **Observability**: Built-in Prometheus metrics and structured logging
+- **Graceful Shutdown**: Zero-downtime deployments with configurable timeouts
+- **Per-Service Config**: Override global settings for individual services
+
+## Planned Features
+
+- **Docker Label Config**: Allow for dynamic configuration from Docker labels similar to Traefik. This would make tsbridge a general-purpose Tailscale Docker sidecar.
+
+## Quick Start
+
+### Installation
+
+Download the latest binary from [releases](https://github.com/jtdowney/tsbridge/releases) or build from source:
+
+```bash
+go install github.com/jtdowney/tsbridge/cmd/tsbridge@latest
+```
+
+### Basic Configuration
+
+Create a `tsbridge.toml` file:
+
+```toml
+# Tailscale OAuth configuration
+[tailscale]
+oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
+oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
+# OAuth tags are REQUIRED when using OAuth authentication
+oauth_tags = ["tag:server", "tag:proxy"]
+state_dir = "/var/lib/tsbridge"
+
+# Global defaults for all services
+[global]
+read_timeout = "30s"
+write_timeout = "30s"
+metrics_addr = ":9090"
+
+# Define your services
+[[services]]
+name = "api"
+backend_addr = "127.0.0.1:8080"
+whois_enabled = true
+
+[[services]]
+name = "web"
+backend_addr = "unix:///var/run/web.sock"
+```
+
+### Running tsbridge
+
+```bash
+# Set OAuth credentials
+export TS_OAUTH_CLIENT_ID="your-client-id"
+export TS_OAUTH_CLIENT_SECRET="your-client-secret"
+
+# Run tsbridge
+tsbridge -config tsbridge.toml
+```
+
+Your services will be available at:
+
+- `https://api.<your-tailnet-name>.ts.net`
+- `https://web.<your-tailnet-name>.ts.net`
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph tsbridge["tsbridge Process"]
+        subgraph ServiceA["Service A"]
+            TSNetA["TSNet Instance"]
+            ListenerA["HTTPS Listener"]
+            ProxyA["Reverse Proxy"]
+            TSNetA --> ListenerA
+            ListenerA --> ProxyA
+        end
+
+        subgraph ServiceB["Service B"]
+            TSNetB["TSNet Instance"]
+            ListenerB["HTTPS Listener"]
+            ProxyB["Reverse Proxy"]
+            TSNetB --> ListenerB
+            ListenerB --> ProxyB
+        end
+
+        subgraph ServiceC["Service C"]
+            TSNetC["TSNet Instance"]
+            ListenerC["HTTPS Listener"]
+            ProxyC["Reverse Proxy"]
+            TSNetC --> ListenerC
+            ListenerC --> ProxyC
+        end
+    end
+
+    ProxyA --> BackendA["Backend A<br/>:8080"]
+    ProxyB --> BackendB["Backend B<br/>:8081"]
+    ProxyC --> BackendC["Backend C<br/>/var/sock"]
+
+    style tsbridge fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style ServiceA fill:#e8f4fd,stroke:#4a90e2
+    style ServiceB fill:#e8f4fd,stroke:#4a90e2
+    style ServiceC fill:#e8f4fd,stroke:#4a90e2
+```
+
+Each service runs its own TSNet instance with isolated state, enabling:
+
+- Independent service lifecycle management
+- Separate TLS certificate handling
+- Isolated authentication and authorization
+- Per-service configuration and timeouts
+
+## Configuration
+
+tsbridge uses a TOML configuration file with three main sections:
+
+### Tailscale Configuration
+
+```toml
+[tailscale]
+# OAuth credentials (choose one method)
+oauth_client_id = "direct-value"
+oauth_client_id_env = "ENV_VAR_NAME"
+oauth_client_id_file = "/path/to/file"
+
+oauth_client_secret = "direct-value"
+oauth_client_secret_env = "ENV_VAR_NAME"
+oauth_client_secret_file = "/path/to/file"
+
+# Optional: Auth key for non-OAuth authentication
+auth_key = "tskey-auth-..."
+auth_key_env = "TS_AUTH_KEY"
+auth_key_file = "/path/to/authkey"
+
+# State directory for TSNet data
+state_dir = "/var/lib/tsbridge"
+state_dir_env = "TSBRIDGE_STATE_DIR"
+
+# Optional: OAuth tags (required when using OAuth authentication)
+oauth_tags = ["tag:proxy", "tag:production"]
+```
+
+### Global Defaults
+
+```toml
+[global]
+# Timeouts (Go duration format)
+read_timeout = "30s"
+write_timeout = "30s"
+idle_timeout = "120s"
+shutdown_timeout = "15s"
+
+# Retry configuration for backend connections
+retry_count = 5
+retry_delay = "5s"
+
+# Whois lookup timeout
+whois_timeout = "1s"
+
+# Metrics endpoint (optional)
+metrics_addr = ":9090"
+
+# Access logging
+access_log = true
+```
+
+### Service Definitions
+
+```toml
+[[services]]
+name = "api"                          # Unique service name
+backend_addr = "127.0.0.1:8080"      # Backend address (TCP or Unix socket)
+whois_enabled = true                 # Inject Tailscale identity headers
+whois_timeout = "500ms"              # Override global whois timeout
+
+# Override global settings for this service
+read_timeout = "60s"
+write_timeout = "60s"
+retry_count = 3
+access_log = false
+```
+
+For a complete configuration reference, see [docs/configuration.md](docs/configuration.md).
+
+## Deployment
+
+### Systemd
+
+See [deployments/systemd/](deployments/systemd/) for systemd service files and installation instructions.
+
+### Docker
+
+```bash
+docker run -v /path/to/config:/config \
+  -e TS_OAUTH_CLIENT_ID=your-id \
+  -e TS_OAUTH_CLIENT_SECRET=your-secret \
+  ghcr.io/jtdowney/tsbridge:latest \
+  -config /config/tsbridge.toml
+```
+
+### Kubernetes
+
+Helm charts and manifests coming soon.
+
+## Monitoring
+
+### Prometheus Metrics
+
+When `metrics_addr` is configured, tsbridge exposes metrics at `/metrics`:
+
+- `tsbridge_requests_total` - Total HTTP requests by service and status
+- `tsbridge_request_duration_seconds` - Request latency histogram
+- `tsbridge_errors_total` - Error counts by service and type
+- `tsbridge_active_connections` - Currently active connections
+- `tsbridge_backend_connections_total` - Backend connection attempts
+- `tsbridge_whois_duration_seconds` - Whois lookup latency
+
+### Logging
+
+tsbridge logs to stdout in plain text format:
+
+```
+2024-01-15 10:30:45 INFO service=api msg="starting service" backend=127.0.0.1:8080
+2024-01-15 10:30:46 INFO service=api msg="listener ready" addr=api.example.ts.net:443
+```
+
+Enable debug logging with `-verbose` flag.
+
+## Development
+
+### Prerequisites
+
+- Go 1.21 or later
+- Make (optional, for convenience targets)
+
+### Building
+
+```bash
+# Build binary
+make build
+
+# Run tests
+make test
+
+# Run linters
+make lint
+
+# Build for all platforms
+make release
+```
+
+### Running Tests
+
+```bash
+# Run tests
+go test ./...
+
+# With coverage
+go test -cover ./...
+```
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Tailscale](https://tailscale.com)'s excellent [tsnet](https://pkg.go.dev/tailscale.com/tsnet) library
+- Inspired by [tsnsrv](https://github.com/boinkor-net/tsnsrv) - a similar tool for exposing services on a Tailnet
