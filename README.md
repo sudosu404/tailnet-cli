@@ -211,10 +211,6 @@ docker run -v /path/to/config:/config \
   -config /config/tsbridge.toml
 ```
 
-### Kubernetes
-
-Helm charts and manifests coming soon.
-
 ## Monitoring
 
 ### Prometheus Metrics
@@ -243,7 +239,7 @@ Enable debug logging with `-verbose` flag.
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.24 or later
 - Make (optional, for convenience targets)
 
 ### Building
