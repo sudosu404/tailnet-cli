@@ -224,6 +224,41 @@ When enabled, the following headers are added to backend requests:
 - `X-Tailscale-Name`: Display name
 - `X-Tailscale-Profile-Picture`: Profile picture URL
 
+### Header Manipulation
+
+Control headers added to or removed from requests and responses:
+
+```toml
+[[services]]
+name = "secure-api"
+backend_addr = "localhost:8080"
+
+# Add headers to upstream requests (to backend)
+upstream_headers = {
+  "X-Service-Name" = "tsbridge"
+}
+
+# Add headers to downstream responses (to client)
+downstream_headers = {
+  "Strict-Transport-Security" = "max-age=31536000; includeSubDomains",
+  "X-Frame-Options" = "DENY",
+  "X-Content-Type-Options" = "nosniff"
+}
+
+# Remove headers from upstream requests
+remove_upstream = ["Cookie", "Authorization"]
+
+# Remove headers from downstream responses
+remove_downstream = ["Server", "X-Powered-By"]
+```
+
+This is particularly useful for:
+
+- Adding security headers like HSTS to all responses
+- Removing sensitive headers before forwarding
+- Adding service identification headers
+- Implementing security best practices
+
 ### Per-Service Overrides
 
 Any global setting can be overridden per service:
@@ -327,11 +362,22 @@ whois_timeout = "2s"
 name = "api"
 backend_addr = "api-backend.internal:8080"
 whois_enabled = true
+# Add security headers for production
+downstream_headers = {
+  "Strict-Transport-Security" = "max-age=63072000; includeSubDomains; preload",
+  "X-Content-Type-Options" = "nosniff",
+  "X-Frame-Options" = "DENY"
+}
 
 [[services]]
 name = "web"
 backend_addr = "unix:///var/run/web/web.sock"
 whois_enabled = true
+# Add security headers for production
+downstream_headers = {
+  "Strict-Transport-Security" = "max-age=63072000; includeSubDomains; preload",
+  "Content-Security-Policy" = "default-src 'self'; script-src 'self' 'unsafe-inline'"
+}
 
 [[services]]
 name = "admin"

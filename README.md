@@ -188,6 +188,9 @@ read_timeout = "60s"
 write_timeout = "60s"
 retry_count = 3
 access_log = false
+
+# Add security headers to downstream responses
+downstream_headers = { "Strict-Transport-Security" = "max-age=31536000; includeSubDomains" }
 ```
 
 For a complete configuration reference, see [docs/configuration.md](docs/configuration.md).
