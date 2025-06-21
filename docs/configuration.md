@@ -49,6 +49,19 @@ OAuth is the recommended authentication method for production use.
 
 **Important**: When using OAuth authentication, you MUST also specify `oauth_tags` to define which ACL tags the node should have.
 
+#### Provisioning OAuth Credentials
+
+To use OAuth authentication, you need to generate an OAuth client ID and secret from the Tailscale admin console. These credentials allow `tsbridge` to create auth keys on your behalf.
+
+1.  In the Tailscale admin console, navigate to **Settings** -> **OAuth clients**.
+2.  Click **Generate OAuth client...**.
+3.  Give your client a descriptive name, for example `tsbridge-production`.
+4.  In the **Scopes** section, find the **Auth Keys** category and check both the **Read** and **Write** checkboxes. This provides the necessary permissions for `tsbridge` to manage auth keys. These are the only permissions required.
+5.  Click **Generate client**.
+6.  Copy the **Client ID** and **Client secret**. Store these securely, as the secret will not be shown again.
+
+Use these credentials to configure `tsbridge`, as shown in the configuration example below.
+
 ```toml
 [tailscale]
 # OAuth Client ID - choose one method:
