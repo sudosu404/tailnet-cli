@@ -16,10 +16,14 @@ services:
       # Global configuration
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tsbridge.tailscale.oauth_tags=tag:server"  # Required when using OAuth
+      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
       - "tsbridge.global.metrics_addr=:9090"
     environment:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
+    ports:
+      - "9090:9090"  # Metrics port
 
   api:
     image: myapp:latest
@@ -64,7 +68,7 @@ labels:
   - "tsbridge.tailscale.auth_key_env=<env_var>"
   - "tsbridge.tailscale.auth_key_file=<file_path>"
 
-  # OAuth tags (comma-separated)
+  # OAuth tags (comma-separated) - REQUIRED when using OAuth
   - "tsbridge.tailscale.oauth_tags=tag:server,tag:proxy"
 
   # State directory

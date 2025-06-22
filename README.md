@@ -225,7 +225,11 @@ services:
     labels:
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tsbridge.tailscale.oauth_tags=tag:server"  # Required when using OAuth
+      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
       - "tsbridge.global.metrics_addr=:9090"
+    ports:
+      - "9090:9090"  # Metrics port
 
   myapp:
     image: myapp:latest
