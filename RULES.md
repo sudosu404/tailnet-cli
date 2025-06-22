@@ -32,10 +32,11 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library. It allo
 
 1. Follow TDD approach strictly
 2. Write failing tests first before implementation
-3. Keep commits focused and use clear commit messages (no conventional commit prefixes)
-4. Run linter and tests before marking any task complete
-5. Pre-commit hooks are configured to run go-mod-tidy and go-fmt
-6. Additional linting via golangci-lint includes go-vet, go-critic, gocognit, gocyclo, and gosec
+3. Use conventional commit format for all commits (e.g., `feat:`, `fix:`, `docs:`, `chore:`)
+4. Update CHANGELOG.md for notable changes before release
+5. Run linter and tests before marking any task complete
+6. Pre-commit hooks are configured to run go-mod-tidy, go-fmt, and golangci-lint
+7. Additional linting via golangci-lint includes go-vet, go-critic, gocognit, gocyclo, and gosec
 
 ## Project Structure
 
@@ -137,3 +138,105 @@ The project includes a Makefile with these targets:
 - `make integration` - Run integration tests with the integration build tag
 - `make release` - Build release binaries using goreleaser
 - `make release-snapshot` - Build release snapshot without tagging
+
+## Commit Message Conventions
+
+- Use conventional commit format for all commits
+- Common prefixes:
+  - `feat:` - New features
+  - `fix:` - Bug fixes
+  - `docs:` - Documentation changes
+  - `chore:` - Maintenance tasks (dependencies, build, etc.)
+  - `test:` - Test changes
+  - `refactor:` - Code refactoring without behavior change
+  - `style:` - Code formatting, missing semicolons, etc.
+  - `perf:` - Performance improvements
+  - `ci:` - CI/CD configuration changes
+- Include issue/PR number in parentheses when applicable: `fix: correct validation logic (#42)`
+
+## Versioning and Release Process
+
+- Follow [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH)
+- Maintain CHANGELOG.md using [Keep a Changelog](https://keepachangelog.com/) format
+- Update CHANGELOG.md before creating a release with all notable changes
+- Releases are automated via GitHub Actions using GoReleaser
+- Tag releases with `vX.Y.Z` format (e.g., `v0.3.1`)
+- Release artifacts include:
+  - Binary builds for multiple platforms
+  - Docker images
+  - Checksums and signatures
+
+## Package Documentation Conventions
+
+- Every package must have a package comment
+- Format: `// Package <name> <verb> <description>.`
+- Common verbs: provides, handles, implements, manages, defines
+- Place package comment immediately before `package` declaration
+- For complex packages, use multi-line comments with additional context
+- Examples:
+  ```go
+  // Package config handles configuration parsing and validation for tsbridge.
+  package config
+  
+  // Package errors provides standardized error types and handling for tsbridge.
+  // It implements error classification, wrapping, and utility functions for
+  // consistent error handling across the codebase.
+  package errors
+  ```
+
+## Test Naming and Organization
+
+### Test File Structure
+- Unit tests: Place next to code (`file.go` → `file_test.go`)
+- Integration tests: Place in `test/integration/`
+- Test helpers: Place in `test/integration/helpers/` or `internal/testutil/`
+
+### Test Function Naming
+- Use descriptive `TestXxx` names that explain what's being tested
+- Examples: `TestLoad`, `TestHTTPProxy`, `TestServiceHealthChecks`
+
+### Table-Driven Tests
+- Preferred pattern for multiple test cases
+- Structure:
+  ```go
+  tests := []struct {
+      name     string
+      input    string
+      expected string
+      wantErr  bool
+  }{
+      {name: "valid case", input: "foo", expected: "bar"},
+      // more cases...
+  }
+  
+  for _, tt := range tests {
+      t.Run(tt.name, func(t *testing.T) {
+          // test implementation
+      })
+  }
+  ```
+
+### Test Utilities
+- Use custom assertion helpers from `internal/testutil`
+- Use `t.Helper()` in test helper functions
+- Use `t.Cleanup()` for resource cleanup
+- Use `t.TempDir()` for temporary directories
+
+## CI/CD Pipeline
+
+- GitHub Actions workflows:
+  - `ci.yml` - Runs on all pushes and PRs (tests, linting, builds)
+  - `lint.yml` - Dedicated linting workflow
+  - `release.yml` - Automated releases on version tags
+- All code must pass CI checks before merging
+- Integration tests run with `integration` build tag
+- Race detection enabled in CI
+
+## Pre-commit Hooks
+
+- Automatically run before each commit:
+  - `go-mod-tidy` - Ensures go.mod and go.sum are clean
+  - `go-fmt` - Formats Go code
+  - `golangci-lint` - Comprehensive linting
+- Install hooks: `pre-commit install`
+- Skip hooks (emergency only): `git commit --no-verify`
