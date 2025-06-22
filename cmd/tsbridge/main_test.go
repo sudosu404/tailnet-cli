@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/jtdowney/tsbridge/internal/config"
 	"github.com/jtdowney/tsbridge/internal/testutil"
 	"log/slog"
 	"os"
@@ -133,5 +134,55 @@ func TestExitFuncInSignalHandler(t *testing.T) {
 		testutil.AssertContains(t, logBuf.String(), "shutdown error")
 	case <-time.After(time.Second):
 		t.Fatal("exitFunc was not called within timeout")
+	}
+}
+
+func TestRegisterProviders(t *testing.T) {
+	// Save original registry
+	originalRegistry := config.DefaultRegistry
+	defer func() { config.DefaultRegistry = originalRegistry }()
+
+	// Create a new registry for testing
+	testRegistry := config.NewProviderRegistry()
+	config.DefaultRegistry = testRegistry
+
+	// Call registerProviders
+	registerProviders()
+
+	// Verify both providers are registered
+	providers := testRegistry.List()
+	testutil.AssertEqual(t, 2, len(providers))
+
+	// Helper to check if string is in slice
+	contains := func(slice []string, str string) bool {
+		for _, s := range slice {
+			if s == str {
+				return true
+			}
+		}
+		return false
+	}
+
+	testutil.AssertTrue(t, contains(providers, "file"), "file provider should be registered")
+	testutil.AssertTrue(t, contains(providers, "docker"), "docker provider should be registered")
+
+	// Verify file provider works
+	fileProvider, err := testRegistry.Get("file", config.FileProviderOptions{Path: "/test/path"})
+	testutil.AssertNil(t, err)
+	testutil.AssertNotNil(t, fileProvider)
+	testutil.AssertEqual(t, "file", fileProvider.Name())
+
+	// Verify docker provider factory is registered
+	provider, err := testRegistry.Get("docker", config.DockerProviderOptions{})
+
+	// The important thing is that the provider is registered, not whether it succeeds
+	// In CI environments, Docker might be available and creation could succeed
+	if err != nil {
+		// If there's an error, it should NOT be about the provider not being registered
+		testutil.AssertNotContains(t, err.Error(), "provider not registered")
+	} else {
+		// If it succeeds, verify we got a valid provider
+		testutil.AssertNotNil(t, provider)
+		testutil.AssertEqual(t, "docker", provider.Name())
 	}
 }
