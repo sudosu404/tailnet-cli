@@ -7,6 +7,7 @@ A lightweight proxy manager built on Tailscale's tsnet library that enables mult
 - **Single Binary**: Easy deployment with no external dependencies
 - **Multi-Service Support**: Run multiple named services from one process
 - **Automatic HTTPS**: TLS certificates managed automatically by Tailscale
+- **Certificate Priming**: Automatic TLS certificate provisioning on startup to avoid delays
 - **Flexible Backends**: Proxy to TCP ports or Unix sockets
 - **Identity Headers**: Optional Tailscale identity header injection
 - **Observability**: Built-in Prometheus metrics and structured logging

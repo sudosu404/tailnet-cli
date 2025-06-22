@@ -2,12 +2,18 @@
 package tailscale
 
 import (
+	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/jtdowney/tsbridge/internal/config"
@@ -179,21 +185,42 @@ func (s *Server) ListenWithService(svc config.Service, tlsMode string, funnelEna
 	}
 
 	// Choose the appropriate listener based on TLS mode and funnel settings
+	var listener net.Listener
+	var err error
+
 	if funnelEnabled {
 		// Funnel requires HTTPS on port 443
-		return serviceServer.ListenFunnel("tcp", ":443")
+		listener, err = serviceServer.ListenFunnel("tcp", ":443")
+		if err != nil {
+			return nil, err
+		}
+		// Note: Funnel already handles certificates, no priming needed
+		return listener, nil
 	}
 
 	switch tlsMode {
 	case "auto":
 		// Use ListenTLS for automatic TLS certificate provisioning
-		return serviceServer.ListenTLS("tcp", ":443")
+		listener, err = serviceServer.ListenTLS("tcp", ":443")
+		if err != nil {
+			return nil, err
+		}
+
+		// Prime the TLS certificate by making a request to ourselves
+		go s.primeCertificate(serviceServer, svc.Name)
+
 	case "off":
 		// Use plain Listen without TLS (traffic still encrypted via WireGuard)
-		return serviceServer.Listen("tcp", ":80")
+		listener, err = serviceServer.Listen("tcp", ":80")
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		return nil, tserrors.NewValidationError(fmt.Sprintf("invalid TLS mode: %q", tlsMode))
 	}
+
+	return listener, nil
 }
 
 // GetServiceServer returns the TSNetServer for a specific service
@@ -257,4 +284,78 @@ func ValidateTailscaleSecrets(cfg config.Tailscale) error {
 func getDefaultStateDir() string {
 	// Use XDG data directory which handles cross-platform paths correctly
 	return filepath.Join(xdg.DataHome, "tsbridge")
+}
+
+// primeCertificate makes an HTTPS request to the service to trigger certificate provisioning
+func (s *Server) primeCertificate(serviceServer tsnetpkg.TSNetServer, serviceName string) {
+	// Wait a bit for the service to start listening
+	time.Sleep(2 * time.Second)
+
+	// Get the LocalClient to fetch status
+	lc, err := serviceServer.LocalClient()
+	if err != nil {
+		slog.Warn("failed to get LocalClient for certificate priming",
+			"service", serviceName,
+			"error", err)
+		return
+	}
+
+	// Get status to find our FQDN
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	status, err := lc.StatusWithoutPeers(ctx)
+	if err != nil {
+		slog.Warn("failed to get status for certificate priming",
+			"service", serviceName,
+			"error", err)
+		return
+	}
+
+	if status == nil || status.Self == nil {
+		slog.Warn("no self peer in status for certificate priming",
+			"service", serviceName)
+		return
+	}
+
+	// Get the FQDN (DNSName includes trailing dot, so remove it)
+	fqdn := strings.TrimSuffix(status.Self.DNSName, ".")
+	if fqdn == "" {
+		slog.Warn("no DNS name found for certificate priming",
+			"service", serviceName)
+		return
+	}
+
+	// Build the HTTPS URL
+	url := fmt.Sprintf("https://%s", fqdn)
+
+	slog.Info("priming TLS certificate",
+		"service", serviceName,
+		"url", url)
+
+	// Create a custom HTTP client with a short timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				// Skip verification since we're just priming the cert
+				InsecureSkipVerify: true, // #nosec G402 - connecting to ourselves to prime certificate
+			},
+		},
+	}
+
+	// Make the request - we don't care about the response
+	resp, err := client.Get(url)
+	if err != nil {
+		// This is expected if the backend isn't ready yet
+		slog.Debug("certificate priming request completed",
+			"service", serviceName,
+			"error", err)
+		return
+	}
+	resp.Body.Close()
+
+	slog.Info("TLS certificate primed successfully",
+		"service", serviceName,
+		"url", url)
 }

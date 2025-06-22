@@ -7,6 +7,7 @@ import (
 
 	"tailscale.com/client/local"
 	"tailscale.com/client/tailscale/apitype"
+	"tailscale.com/ipn/ipnstate"
 	"tailscale.com/tsnet"
 	"tailscale.com/types/logger"
 )
@@ -50,6 +51,8 @@ type TSNetServer interface {
 type LocalClient interface {
 	// WhoIs returns information about the connecting client.
 	WhoIs(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error)
+	// StatusWithoutPeers returns the status without peer information.
+	StatusWithoutPeers(ctx context.Context) (*ipnstate.Status, error)
 }
 
 // RealTSNetServer wraps a real tsnet.Server to implement TSNetServer.
@@ -124,6 +127,11 @@ type RealLocalClient struct {
 // WhoIs implements LocalClient.
 func (c *RealLocalClient) WhoIs(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
 	return c.lc.WhoIs(ctx, remoteAddr)
+}
+
+// StatusWithoutPeers implements LocalClient.
+func (c *RealLocalClient) StatusWithoutPeers(ctx context.Context) (*ipnstate.Status, error) {
+	return c.lc.StatusWithoutPeers(ctx)
 }
 
 // MockTSNetServer is a mock implementation of TSNetServer for testing.
@@ -254,13 +262,22 @@ func (m *MockTSNetServer) SetEphemeral(ephemeral bool) {
 
 // MockLocalClient is a mock implementation of LocalClient for testing.
 type MockLocalClient struct {
-	WhoIsFunc func(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error)
+	WhoIsFunc              func(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error)
+	StatusWithoutPeersFunc func(ctx context.Context) (*ipnstate.Status, error)
 }
 
 // WhoIs implements LocalClient.
 func (m *MockLocalClient) WhoIs(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
 	if m.WhoIsFunc != nil {
 		return m.WhoIsFunc(ctx, remoteAddr)
+	}
+	return nil, nil
+}
+
+// StatusWithoutPeers implements LocalClient.
+func (m *MockLocalClient) StatusWithoutPeers(ctx context.Context) (*ipnstate.Status, error) {
+	if m.StatusWithoutPeersFunc != nil {
+		return m.StatusWithoutPeersFunc(ctx)
 	}
 	return nil, nil
 }

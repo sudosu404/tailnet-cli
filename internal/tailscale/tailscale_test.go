@@ -1,6 +1,7 @@
 package tailscale
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -8,6 +9,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
+
+	"tailscale.com/ipn/ipnstate"
 
 	"github.com/jtdowney/tsbridge/internal/config"
 	tferrors "github.com/jtdowney/tsbridge/internal/errors"
@@ -1424,6 +1428,119 @@ func TestSecretValidationErrorMessages(t *testing.T) {
 			errMsg := err.Error()
 			for _, expected := range tt.expectedErrors {
 				testutil.AssertContains(t, errMsg, expected)
+			}
+		})
+	}
+}
+
+func TestCertificatePriming(t *testing.T) {
+	tests := []struct {
+		name           string
+		serviceName    string
+		tlsMode        string
+		funnelEnabled  bool
+		expectPriming  bool
+		mockDNSName    string
+		statusError    error
+		localClientErr error
+	}{
+		{
+			name:          "TLS auto mode triggers priming",
+			serviceName:   "test-service",
+			tlsMode:       "auto",
+			funnelEnabled: false,
+			expectPriming: true,
+			mockDNSName:   "test-service.tailnet.ts.net.",
+		},
+		{
+			name:          "TLS off mode does not trigger priming",
+			serviceName:   "test-service",
+			tlsMode:       "off",
+			funnelEnabled: false,
+			expectPriming: false,
+		},
+		{
+			name:          "Funnel mode does not trigger priming",
+			serviceName:   "test-service",
+			tlsMode:       "auto",
+			funnelEnabled: true,
+			expectPriming: false,
+		},
+		{
+			name:           "LocalClient error handled gracefully",
+			serviceName:    "test-service",
+			tlsMode:        "auto",
+			funnelEnabled:  false,
+			expectPriming:  true,
+			localClientErr: errors.New("local client error"),
+		},
+		{
+			name:          "Status error handled gracefully",
+			serviceName:   "test-service",
+			tlsMode:       "auto",
+			funnelEnabled: false,
+			expectPriming: true,
+			statusError:   errors.New("status error"),
+		},
+		{
+			name:          "Empty DNS name handled gracefully",
+			serviceName:   "test-service",
+			tlsMode:       "auto",
+			funnelEnabled: false,
+			expectPriming: true,
+			mockDNSName:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mocks
+			mockLocalClient := &tsnet.MockLocalClient{}
+			mockTSNetServer := tsnet.NewMockTSNetServer()
+
+			// Set up mock expectations
+			mockTSNetServer.LocalClientFunc = func() (tsnet.LocalClient, error) {
+				if tt.localClientErr != nil {
+					return nil, tt.localClientErr
+				}
+				return mockLocalClient, nil
+			}
+
+			if tt.localClientErr == nil && tt.expectPriming {
+				mockLocalClient.StatusWithoutPeersFunc = func(ctx context.Context) (*ipnstate.Status, error) {
+					if tt.statusError != nil {
+						return nil, tt.statusError
+					}
+					return &ipnstate.Status{
+						Self: &ipnstate.PeerStatus{
+							DNSName: tt.mockDNSName,
+						},
+					}, nil
+				}
+			}
+
+			// Create server with mock factory
+			server, err := NewServerWithFactory(config.Tailscale{
+				AuthKey: "test-key",
+			}, func() tsnet.TSNetServer {
+				return mockTSNetServer
+			})
+			testutil.AssertNoError(t, err)
+
+			// Create service config
+			svc := config.Service{
+				Name:        tt.serviceName,
+				BackendAddr: "localhost:8080",
+			}
+
+			// Call ListenWithService
+			listener, err := server.ListenWithService(svc, tt.tlsMode, tt.funnelEnabled)
+			testutil.AssertNoError(t, err)
+			testutil.AssertNotNil(t, listener)
+
+			// Give some time for the goroutine to run if priming is expected
+			if tt.expectPriming {
+				time.Sleep(3 * time.Second)
 			}
 		})
 	}
