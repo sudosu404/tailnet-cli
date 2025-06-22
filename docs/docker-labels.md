@@ -5,7 +5,6 @@ tsbridge supports dynamic configuration through Docker container labels, similar
 ## Quick Start
 
 ```yaml
-version: '3.8'
 services:
   tsbridge:
     image: ghcr.io/jtdowney/tsbridge:latest
@@ -59,15 +58,15 @@ labels:
   - "tsbridge.tailscale.oauth_client_secret=<value>"
   - "tsbridge.tailscale.oauth_client_secret_env=<env_var>"
   - "tsbridge.tailscale.oauth_client_secret_file=<file_path>"
-  
+
   # Auth key (alternative to OAuth)
   - "tsbridge.tailscale.auth_key=<value>"
   - "tsbridge.tailscale.auth_key_env=<env_var>"
   - "tsbridge.tailscale.auth_key_file=<file_path>"
-  
+
   # OAuth tags (comma-separated)
   - "tsbridge.tailscale.oauth_tags=tag:server,tag:proxy"
-  
+
   # State directory
   - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
 ```
@@ -82,20 +81,20 @@ labels:
   - "tsbridge.global.idle_timeout=120s"
   - "tsbridge.global.shutdown_timeout=15s"
   - "tsbridge.global.response_header_timeout=10s"
-  
+
   # Retry configuration
   - "tsbridge.global.retry_count=5"
   - "tsbridge.global.retry_delay=5s"
-  
+
   # Metrics
   - "tsbridge.global.metrics_addr=:9090"
-  
+
   # Access logging
   - "tsbridge.global.access_log=true"
-  
+
   # Trusted proxies (comma-separated)
   - "tsbridge.global.trusted_proxies=10.0.0.0/8,172.16.0.0/12"
-  
+
   # Transport timeouts
   - "tsbridge.global.dial_timeout=10s"
   - "tsbridge.global.keep_alive_timeout=30s"
@@ -115,10 +114,10 @@ Service labels configure individual services that tsbridge will proxy.
 labels:
   # Enable tsbridge for this container (required)
   - "tsbridge.enabled=true"
-  
+
   # Service name (defaults to container name)
   - "tsbridge.service.name=api"
-  
+
   # Backend address (see "Backend Address Resolution" below)
   - "tsbridge.service.backend_addr=localhost:8080"
   # OR just the port (container name will be used as host)
@@ -132,26 +131,26 @@ labels:
   # Whois configuration
   - "tsbridge.service.whois_enabled=true"
   - "tsbridge.service.whois_timeout=2s"
-  
+
   # TLS mode
-  - "tsbridge.service.tls_mode=auto"  # or "off"
-  
+  - "tsbridge.service.tls_mode=auto" # or "off"
+
   # Service-specific timeouts (override global)
   - "tsbridge.service.read_timeout=60s"
   - "tsbridge.service.write_timeout=60s"
   - "tsbridge.service.idle_timeout=300s"
   - "tsbridge.service.response_header_timeout=30s"
-  
+
   # Retry configuration (override global)
   - "tsbridge.service.retry_count=3"
   - "tsbridge.service.retry_delay=1s"
-  
+
   # Access logging (override global)
   - "tsbridge.service.access_log=false"
-  
+
   # Tailscale Funnel
   - "tsbridge.service.funnel_enabled=true"
-  
+
   # Ephemeral nodes
   - "tsbridge.service.ephemeral=true"
 ```
@@ -163,14 +162,14 @@ labels:
   # Add headers to upstream requests
   - "tsbridge.service.upstream_headers.X-Custom-Header=value"
   - "tsbridge.service.upstream_headers.X-Request-ID=generated"
-  
+
   # Add headers to downstream responses
   - "tsbridge.service.downstream_headers.X-Frame-Options=DENY"
   - "tsbridge.service.downstream_headers.X-Content-Type-Options=nosniff"
-  
+
   # Remove headers from upstream requests (comma-separated)
   - "tsbridge.service.remove_upstream=X-Forwarded-For,X-Real-IP"
-  
+
   # Remove headers from downstream responses (comma-separated)
   - "tsbridge.service.remove_downstream=Server,X-Powered-By"
 ```
@@ -194,7 +193,6 @@ tsbridge resolves backend addresses in the following order:
 
 # Port only (container name will be used)
 - "tsbridge.service.port=3000"
-
 # Auto-detection (uses first exposed port)
 # No backend labels needed if container exposes a port
 ```
@@ -225,12 +223,10 @@ Updates are checked every 5 seconds by default.
 ## Complete Example
 
 ```yaml
-version: '3.8'
-
 services:
   tsbridge:
     image: ghcr.io/jtdowney/tsbridge:latest
-    command: 
+    command:
       - "--provider"
       - "docker"
       - "--verbose"
@@ -245,7 +241,7 @@ services:
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
       - "tsbridge.tailscale.oauth_tags=tag:server,tag:proxy"
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      
+
       # Global defaults
       - "tsbridge.global.metrics_addr=:9090"
       - "tsbridge.global.read_timeout=30s"
@@ -254,7 +250,7 @@ services:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     ports:
-      - "9090:9090"  # Metrics
+      - "9090:9090" # Metrics
 
   # API service
   api:
@@ -310,18 +306,21 @@ networks:
 ## Troubleshooting
 
 ### Container not discovered
+
 - Ensure `tsbridge.enabled=true` is set
 - Check that the container is running
 - Verify tsbridge has access to Docker socket
 - Check logs with `--verbose` flag
 
 ### Backend connection failures
+
 - Verify containers are on the same network
 - Check the backend address format
 - Ensure the backend service is listening on the specified port
 - Check container logs for startup errors
 
 ### Label changes not detected
+
 - The watch interval is 5 seconds - wait for the next check
 - Restart tsbridge if changes aren't picked up
 - Check tsbridge logs for configuration errors

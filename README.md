@@ -205,6 +205,7 @@ See [deployments/systemd/](deployments/systemd/) for systemd service files and i
 
 ```bash
 docker run -v /path/to/config:/config \
+  -v tsbridge-state:/var/lib/tsbridge \
   -e TS_OAUTH_CLIENT_ID=your-id \
   -e TS_OAUTH_CLIENT_SECRET=your-secret \
   ghcr.io/jtdowney/tsbridge:latest \
@@ -214,13 +215,13 @@ docker run -v /path/to/config:/config \
 #### With Docker Labels (Dynamic Configuration)
 
 ```yaml
-version: '3.8'
 services:
   tsbridge:
     image: ghcr.io/jtdowney/tsbridge:latest
     command: ["--provider", "docker"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - tsbridge-state:/var/lib/tsbridge
     labels:
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
@@ -232,6 +233,9 @@ services:
       - "tsbridge.enabled=true"
       - "tsbridge.service.name=myapp"
       - "tsbridge.service.port=8080"
+
+volumes:
+  tsbridge-state:
 ```
 
 See [docs/docker-labels.md](docs/docker-labels.md) for complete Docker label configuration reference.
