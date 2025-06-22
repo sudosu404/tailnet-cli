@@ -10,9 +10,10 @@ import (
 	"github.com/jtdowney/tsbridge/internal/config"
 	"github.com/jtdowney/tsbridge/internal/service"
 	"github.com/jtdowney/tsbridge/internal/tailscale"
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	tsnetpkg "github.com/jtdowney/tsbridge/internal/tsnet"
 	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // mockListener is a simple mock implementation of net.Listener
@@ -84,8 +85,8 @@ func TestFunnelIntegration(t *testing.T) {
 
 			mock.ListenFunnelFunc = func(network, addr string) (net.Listener, error) {
 				listenFunnelCalled = true
-				testutil.AssertEqual(t, "tcp", network)
-				testutil.AssertEqual(t, ":443", addr)
+				assert.Equal(t, "tcp", network)
+				assert.Equal(t, ":443", addr)
 				return &mockListener{addr: addr}, nil
 			}
 
@@ -114,21 +115,21 @@ func TestFunnelIntegration(t *testing.T) {
 
 		// Create tailscale server with mock factory
 		tsServer, err := tailscale.NewServerWithFactory(cfg.Tailscale, factory)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		defer tsServer.Close()
 
 		// Create and start service registry
 		registry := service.NewRegistry(cfg, tsServer)
 		err = registry.StartServices()
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		defer registry.Shutdown(ctx)
 
 		// Verify that ListenFunnel was called and others were not
-		testutil.AssertTrue(t, listenFunnelCalled)
-		testutil.AssertFalse(t, listenTLSCalled)
-		testutil.AssertFalse(t, listenCalled)
+		assert.True(t, listenFunnelCalled)
+		assert.False(t, listenTLSCalled)
+		assert.False(t, listenCalled)
 	})
 
 	t.Run("service without funnel uses TLS mode", func(t *testing.T) {
@@ -153,8 +154,8 @@ func TestFunnelIntegration(t *testing.T) {
 
 			mock.ListenTLSFunc = func(network, addr string) (net.Listener, error) {
 				listenTLSCalled = true
-				testutil.AssertEqual(t, "tcp", network)
-				testutil.AssertEqual(t, ":443", addr)
+				assert.Equal(t, "tcp", network)
+				assert.Equal(t, ":443", addr)
 				return &mockListener{addr: addr}, nil
 			}
 
@@ -187,21 +188,21 @@ func TestFunnelIntegration(t *testing.T) {
 
 		// Create tailscale server with mock factory
 		tsServer, err := tailscale.NewServerWithFactory(cfg.Tailscale, factory)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		defer tsServer.Close()
 
 		// Create and start service registry
 		registry := service.NewRegistry(cfg, tsServer)
 		err = registry.StartServices()
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		defer registry.Shutdown(ctx)
 
 		// Verify that ListenTLS was called for auto mode
-		testutil.AssertFalse(t, listenFunnelCalled)
-		testutil.AssertTrue(t, listenTLSCalled)
-		testutil.AssertFalse(t, listenCalled)
+		assert.False(t, listenFunnelCalled)
+		assert.True(t, listenTLSCalled)
+		assert.False(t, listenCalled)
 	})
 
 	t.Run("service with funnel disabled uses TLS mode", func(t *testing.T) {
@@ -220,8 +221,8 @@ func TestFunnelIntegration(t *testing.T) {
 			// Override listen functions to track calls
 			mock.ListenFunc = func(network, addr string) (net.Listener, error) {
 				listenCalled = true
-				testutil.AssertEqual(t, "tcp", network)
-				testutil.AssertEqual(t, ":80", addr)
+				assert.Equal(t, "tcp", network)
+				assert.Equal(t, ":80", addr)
 				return &mockListener{addr: addr}, nil
 			}
 
@@ -255,19 +256,19 @@ func TestFunnelIntegration(t *testing.T) {
 
 		// Create tailscale server with mock factory
 		tsServer, err := tailscale.NewServerWithFactory(cfg.Tailscale, factory)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		defer tsServer.Close()
 
 		// Create and start service registry
 		registry := service.NewRegistry(cfg, tsServer)
 		err = registry.StartServices()
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		defer registry.Shutdown(ctx)
 
 		// Verify that Listen was called (not ListenFunnel)
-		testutil.AssertFalse(t, listenFunnelCalled)
-		testutil.AssertTrue(t, listenCalled)
+		assert.False(t, listenFunnelCalled)
+		assert.True(t, listenCalled)
 	})
 }

@@ -13,9 +13,10 @@ import (
 	"github.com/jtdowney/tsbridge/internal/errors"
 	"github.com/jtdowney/tsbridge/internal/metrics"
 	"github.com/jtdowney/tsbridge/internal/tailscale"
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	"github.com/jtdowney/tsbridge/internal/tsnet"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // createTestUnixSocket creates a temporary unix socket for testing
@@ -30,7 +31,7 @@ func createTestUnixSocket(t *testing.T) string {
 
 	// Create a simple unix socket server
 	listener, err := net.Listen("unix", socketPath)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		listener.Close()
 		os.Remove(socketPath)
@@ -197,8 +198,8 @@ func TestNewAppWithOptions(t *testing.T) {
 			},
 			wantErr: false,
 			checkFn: func(t *testing.T, app *App) {
-				testutil.AssertNotNil(t, app)
-				testutil.AssertNotNil(t, app.tsServer)
+				assert.NotNil(t, app)
+				assert.NotNil(t, app.tsServer)
 			},
 		},
 		{
@@ -209,8 +210,8 @@ func TestNewAppWithOptions(t *testing.T) {
 			},
 			wantErr: false,
 			checkFn: func(t *testing.T, app *App) {
-				testutil.AssertNotNil(t, app)
-				testutil.AssertNotNil(t, app.tsServer)
+				assert.NotNil(t, app)
+				assert.NotNil(t, app.tsServer)
 			},
 		},
 	}
@@ -220,11 +221,11 @@ func TestNewAppWithOptions(t *testing.T) {
 			app, err := NewAppWithOptions(tt.cfg, tt.opts)
 
 			if tt.wantErr {
-				testutil.AssertError(t, err)
-				testutil.AssertNil(t, app)
+				assert.Error(t, err)
+				assert.Nil(t, app)
 			} else {
-				testutil.AssertNoError(t, err)
-				testutil.RequireNotNil(t, app)
+				assert.NoError(t, err)
+				require.NotNil(t, app)
 
 				if tt.checkFn != nil {
 					tt.checkFn(t, app)
@@ -301,7 +302,7 @@ func TestAppStart(t *testing.T) {
 				app, err := NewAppWithOptions(cfg, Options{
 					TSServer: tsServer,
 				})
-				testutil.RequireNoError(t, err)
+				require.NoError(t, err)
 				return app
 			},
 			contextTimeout: 100 * time.Millisecond,
@@ -336,7 +337,7 @@ func TestAppStart(t *testing.T) {
 				app, err := NewAppWithOptions(cfg, Options{
 					TSServer: tsServer,
 				})
-				testutil.RequireNoError(t, err)
+				require.NoError(t, err)
 				return app
 			},
 			contextTimeout: 100 * time.Millisecond,
@@ -357,12 +358,12 @@ func TestAppStart(t *testing.T) {
 
 			// Check expectations
 			if tt.expectError {
-				testutil.AssertError(t, err)
+				assert.Error(t, err)
 				if tt.expectedErrMessage != "" {
-					testutil.AssertError(t, err, tt.expectedErrMessage)
+					assert.Contains(t, err.Error(), tt.expectedErrMessage)
 				}
 			} else {
-				testutil.AssertNoError(t, err)
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -392,7 +393,7 @@ func TestAppStartIdempotency(t *testing.T) {
 
 	tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 	app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -404,9 +405,9 @@ func TestAppStartIdempotency(t *testing.T) {
 	err3 := app.Start(ctx)
 
 	// All should return nil (idempotent)
-	testutil.AssertNoError(t, err1)
-	testutil.AssertNoError(t, err2)
-	testutil.AssertNoError(t, err3)
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.NoError(t, err3)
 }
 
 // Test that Start returns without error when context is cancelled
@@ -416,7 +417,7 @@ func TestAppStartReturnsCleanlyOnContextCancel(t *testing.T) {
 	// Create app
 	tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 	app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Start the app with a cancellable context
 	ctx, cancel := context.WithCancel(context.Background())
@@ -435,7 +436,7 @@ func TestAppStartReturnsCleanlyOnContextCancel(t *testing.T) {
 	// Start should return nil (no error) when context is cancelled
 	select {
 	case err := <-startErr:
-		testutil.AssertNoError(t, err)
+		assert.NoError(t, err)
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not return within timeout")
 	}
@@ -448,7 +449,7 @@ func TestAppStartDoesNotBlockShutdown(t *testing.T) {
 	// Create app
 	tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 	app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Create a context that we won't cancel immediately
 	ctx := context.Background()
@@ -472,7 +473,7 @@ func TestAppStartDoesNotBlockShutdown(t *testing.T) {
 	shutdownErr := app.Shutdown(shutdownCtx)
 
 	// Shutdown should succeed
-	testutil.AssertNoError(t, shutdownErr)
+	assert.NoError(t, shutdownErr)
 }
 
 func TestAppStartWithPartialServiceFailures(t *testing.T) {
@@ -716,7 +717,7 @@ func TestAppShutdownCanBeCalledIndependently(t *testing.T) {
 	// Create app
 	tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 	app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Start the app
 	ctx, cancel := context.WithCancel(context.Background())
@@ -735,7 +736,7 @@ func TestAppShutdownCanBeCalledIndependently(t *testing.T) {
 	defer shutdownCancel()
 
 	err = app.Shutdown(shutdownCtx)
-	testutil.AssertNoError(t, err)
+	assert.NoError(t, err)
 
 	// Now cancel the start context
 	cancel()
@@ -743,7 +744,7 @@ func TestAppShutdownCanBeCalledIndependently(t *testing.T) {
 	// Wait for Start to return
 	select {
 	case err := <-startErr:
-		testutil.AssertNoError(t, err)
+		assert.NoError(t, err)
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not return within timeout")
 	}
@@ -803,10 +804,10 @@ func TestAppPerformShutdown(t *testing.T) {
 
 	tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 	app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	// Setup metrics manually for test
 	err = app.setupMetrics()
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Start the app first
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -818,7 +819,7 @@ func TestAppPerformShutdown(t *testing.T) {
 	// Now test performShutdown
 	shutdownCtx := context.Background()
 	err = app.performShutdown(shutdownCtx)
-	testutil.AssertNoError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestAppSetupMetrics(t *testing.T) {
@@ -860,7 +861,7 @@ func TestAppSetupMetrics(t *testing.T) {
 			// Create app using internal setup path
 			tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 			app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-			testutil.RequireNoError(t, err)
+			require.NoError(t, err)
 
 			// Set a valid registry
 			app.cfg.Global.MetricsAddr = tt.metricsAddr
@@ -870,13 +871,13 @@ func TestAppSetupMetrics(t *testing.T) {
 
 			// Check expectations
 			if tt.expectError {
-				testutil.AssertError(t, err)
+				assert.Error(t, err)
 				if tt.expectedErrMessage != "" {
-					testutil.AssertError(t, err, tt.expectedErrMessage)
+					assert.Contains(t, err.Error(), tt.expectedErrMessage)
 				}
 			} else {
-				testutil.AssertNoError(t, err)
-				testutil.AssertNotNil(t, app.metricsServer)
+				assert.NoError(t, err)
+				assert.NotNil(t, app.metricsServer)
 			}
 		})
 	}
@@ -911,7 +912,7 @@ func TestAppMetricsAddr(t *testing.T) {
 
 				tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 				app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-				testutil.RequireNoError(t, err)
+				require.NoError(t, err)
 				return app
 			},
 			expectedEmpty: true,
@@ -940,10 +941,10 @@ func TestAppMetricsAddr(t *testing.T) {
 
 				tsServer := createMockTailscaleServer(t, cfg.Tailscale)
 				app, err := NewAppWithOptions(cfg, Options{TSServer: tsServer})
-				testutil.RequireNoError(t, err)
+				require.NoError(t, err)
 				// Setup metrics manually for test
 				err = app.setupMetrics()
-				testutil.RequireNoError(t, err)
+				require.NoError(t, err)
 
 				// Start metrics server to get actual address
 				ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -966,9 +967,9 @@ func TestAppMetricsAddr(t *testing.T) {
 			addr := app.MetricsAddr()
 
 			if tt.expectedEmpty {
-				testutil.AssertEqual(t, "", addr)
+				assert.Equal(t, "", addr)
 			} else {
-				testutil.AssertNotEmpty(t, addr)
+				assert.NotEmpty(t, addr)
 			}
 		})
 	}
@@ -981,29 +982,29 @@ func TestMetricsServerIntegration(t *testing.T) {
 
 	// Register the collector properly
 	err := collector.Register(reg)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	server := metrics.NewServerWithRegistry("127.0.0.1:0", reg, 5*time.Second)
 
 	// Start the server
 	ctx := context.Background()
 	err = server.Start(ctx)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Get the actual address
 	addr := server.Addr()
-	testutil.AssertNotEmpty(t, addr)
+	assert.NotEmpty(t, addr)
 
 	// Try to connect to verify it's listening
 	resp, err := http.Get("http://" + addr + "/metrics")
 	if err == nil {
 		resp.Body.Close()
-		testutil.AssertEqual(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 
 	// Shutdown
 	err = server.Shutdown(context.Background())
-	testutil.AssertNoError(t, err)
+	assert.NoError(t, err)
 }
 
 // TestAppPartialFailureLogging verifies that partial failures are logged correctly

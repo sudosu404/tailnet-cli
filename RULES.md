@@ -54,7 +54,6 @@ tsbridge/
 │   ├── proxy/          # Reverse proxy implementation
 │   ├── service/        # Service registry and management
 │   ├── tailscale/      # Tailscale integration utilities
-│   ├── testutil/       # Test utilities
 │   └── tsnet/          # Tailscale tsnet integration
 ├── test/               # Integration and e2e tests
 │   └── integration/    # Integration test suite
@@ -189,7 +188,7 @@ The project includes a Makefile with these targets:
 ### Test File Structure
 - Unit tests: Place next to code (`file.go` → `file_test.go`)
 - Integration tests: Place in `test/integration/`
-- Test helpers: Place in `test/integration/helpers/` or `internal/testutil/`
+- Test helpers: Place in `test/integration/helpers/`
 
 ### Test Function Naming
 - Use descriptive `TestXxx` names that explain what's being tested
@@ -217,10 +216,25 @@ The project includes a Makefile with these targets:
   ```
 
 ### Test Utilities
-- Use custom assertion helpers from `internal/testutil`
+- Use Testify for test assertions (`github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require`)
+- Use `assert` for non-critical assertions that can continue the test
+- Use `require` for critical assertions that should stop the test immediately
 - Use `t.Helper()` in test helper functions
 - Use `t.Cleanup()` for resource cleanup
 - Use `t.TempDir()` for temporary directories
+
+### Testify Usage Examples
+```go
+// Use assert for non-critical checks
+assert.Equal(t, expected, actual)
+assert.NoError(t, err)
+assert.True(t, condition)
+assert.Contains(t, haystack, needle)
+
+// Use require for critical checks that should stop the test
+require.NoError(t, err)
+require.NotNil(t, object)
+```
 
 ## CI/CD Pipeline
 

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestInMemoryGracefulShutdown was removed - this behavior is already tested in:
@@ -39,9 +39,9 @@ func TestE2EGracefulShutdown(t *testing.T) {
 	output := process.GetOutput()
 
 	// Verify graceful shutdown sequence
-	testutil.AssertContains(t, output, "received signal")
-	testutil.AssertContains(t, output, "shutting down")
-	testutil.AssertContains(t, output, "shutdown complete")
+	assert.Contains(t, output, "received signal")
+	assert.Contains(t, output, "shutting down")
+	assert.Contains(t, output, "shutdown complete")
 
 	// Log request metrics
 	t.Logf("Requests - Started: %d, Completed: %d",
@@ -79,7 +79,7 @@ func TestE2EShutdownWithActiveRequests(t *testing.T) {
 	t.Logf("Shutdown completed in %v", shutdownDuration)
 
 	// Should respect shutdown timeout (2s) plus some margin
-	testutil.AssertLess(t, shutdownDuration, 3*time.Second, "shutdown took too long")
+	assert.Less(t, shutdownDuration, 3*time.Second, "shutdown took too long")
 
 	// Verify shutdown happened - at least one of these messages should appear
 	if !strings.Contains(output, "shutdown complete") && !strings.Contains(output, "shutting down") {

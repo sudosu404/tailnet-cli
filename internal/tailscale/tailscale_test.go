@@ -16,8 +16,9 @@ import (
 
 	"github.com/jtdowney/tsbridge/internal/config"
 	tferrors "github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	tsnet "github.com/jtdowney/tsbridge/internal/tsnet"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewServer(t *testing.T) {
@@ -1363,14 +1364,14 @@ func TestSecretResolutionByConfig(t *testing.T) {
 			// NewServer validates that credentials are present
 			server, err := NewServerWithFactory(tt.cfg, factory)
 			if tt.expectNewErr {
-				testutil.AssertError(t, err) // Just check that error occurred
+				assert.Error(t, err) // Just check that error occurred
 				if tt.errMsg != "" {
-					testutil.AssertError(t, err, tt.errMsg)
+					assert.Contains(t, err.Error(), tt.errMsg)
 				}
 				return
 			}
-			testutil.RequireNoError(t, err, "NewServer should succeed with resolved secrets")
-			testutil.RequireNotNil(t, server)
+			require.NoError(t, err, "NewServer should succeed with resolved secrets")
+			require.NotNil(t, server)
 		})
 	}
 }
@@ -1423,12 +1424,12 @@ func TestSecretValidationErrorMessages(t *testing.T) {
 			}
 
 			_, err := NewServerWithFactory(tt.cfg, factory)
-			testutil.RequireError(t, err, "NewServer should fail when secrets are missing")
+			require.Error(t, err, "NewServer should fail when secrets are missing")
 
 			// Verify error message contains expected information
 			errMsg := err.Error()
 			for _, expected := range tt.expectedErrors {
-				testutil.AssertContains(t, errMsg, expected)
+				assert.Contains(t, errMsg, expected)
 			}
 		})
 	}
@@ -1555,7 +1556,7 @@ func TestCertificatePriming(t *testing.T) {
 			}, func() tsnet.TSNetServer {
 				return mockTSNetServer
 			})
-			testutil.AssertNoError(t, err)
+			assert.NoError(t, err)
 
 			// Create service config
 			svc := config.Service{
@@ -1565,8 +1566,8 @@ func TestCertificatePriming(t *testing.T) {
 
 			// Call ListenWithService
 			listener, err := server.ListenWithService(svc, tt.tlsMode, tt.funnelEnabled)
-			testutil.AssertNoError(t, err)
-			testutil.AssertNotNil(t, listener)
+			assert.NoError(t, err)
+			assert.NotNil(t, listener)
 
 			// Give some time for the goroutine to run if priming is expected
 			if tt.expectPriming {

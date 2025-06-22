@@ -20,8 +20,8 @@ import (
 	"github.com/jtdowney/tsbridge/internal/tailscale"
 	"github.com/jtdowney/tsbridge/internal/tsnet"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 )
@@ -77,7 +77,7 @@ func contains(s, substr string) bool {
 func TestRegistry_StartServices(t *testing.T) {
 	// Start a mock backend server
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer listener.Close()
 
 	backendAddr := listener.Addr().String()
@@ -117,7 +117,7 @@ func TestRegistry_StartServices(t *testing.T) {
 
 	// Create tailscale server using the test factory
 	tsServer, err := testTailscaleServerFactory()
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Create registry
 	registry := NewRegistry(cfg, tsServer)
@@ -128,22 +128,22 @@ func TestRegistry_StartServices(t *testing.T) {
 
 	// Start services
 	err = registry.StartServices()
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Verify services were created
-	testutil.AssertLen(t, registry.services, 2)
+	assert.Len(t, registry.services, 2)
 
 	// Verify service properties
 	for _, svc := range registry.services {
-		testutil.AssertNotNil(t, svc.server)
-		testutil.AssertNotNil(t, svc.listener)
-		testutil.AssertEqual(t, backendAddr, svc.Config.BackendAddr)
+		assert.NotNil(t, svc.server)
+		assert.NotNil(t, svc.listener)
+		assert.Equal(t, backendAddr, svc.Config.BackendAddr)
 	}
 
 	// Shutdown
 	shutdownCtx := context.Background()
 	err = registry.Shutdown(shutdownCtx)
-	testutil.AssertNoError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestRegistry_StartServices_WithBackendHealthCheck(t *testing.T) {
@@ -756,7 +756,7 @@ func TestService_isAccessLogEnabled(t *testing.T) {
 				},
 			}
 
-			testutil.AssertEqual(t, tt.wantEnabled, s.isAccessLogEnabled())
+			assert.Equal(t, tt.wantEnabled, s.isAccessLogEnabled())
 		})
 	}
 }
@@ -771,7 +771,7 @@ func TestService_isAccessLogEnabled_NoGlobalConfig(t *testing.T) {
 	}
 
 	// Should default to true
-	testutil.AssertTrue(t, s.isAccessLogEnabled())
+	assert.True(t, s.isAccessLogEnabled())
 }
 
 func TestServiceWithWhoisMiddleware(t *testing.T) {
@@ -1310,7 +1310,7 @@ func TestServiceWithRealProxy(t *testing.T) {
 
 	// Initialize the handler
 	handler, err := svc.CreateHandler()
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	svc.SetHandler(handler)
 
 	handler = svc.Handler()
@@ -1330,8 +1330,8 @@ func TestServiceWithRealProxy(t *testing.T) {
 			path:           "/api/users",
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, resp *http.Response, body string) {
-				testutil.AssertEqual(t, "backend says hello from /api/users", body)
-				testutil.AssertEqual(t, "true", resp.Header.Get("X-Backend-Response"))
+				assert.Equal(t, "backend says hello from /api/users", body)
+				assert.Equal(t, "true", resp.Header.Get("X-Backend-Response"))
 			},
 		},
 		{
@@ -1341,7 +1341,7 @@ func TestServiceWithRealProxy(t *testing.T) {
 			body:           `{"name": "test"}`,
 			expectedStatus: http.StatusOK,
 			checkResponse: func(t *testing.T, resp *http.Response, body string) {
-				testutil.AssertEqual(t, "backend says hello from /api/users", body)
+				assert.Equal(t, "backend says hello from /api/users", body)
 			},
 		},
 	}
@@ -1365,7 +1365,7 @@ func TestServiceWithRealProxy(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			// Check status
-			testutil.AssertEqual(t, tt.expectedStatus, rr.Code)
+			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			// Create response for checking
 			resp := rr.Result()

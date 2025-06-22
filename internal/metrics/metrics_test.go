@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewCollector(t *testing.T) {
@@ -318,20 +319,20 @@ func TestRecordError(t *testing.T) {
 func TestEnhancedMetrics(t *testing.T) {
 	t.Run("ConnectionCountGauge", func(t *testing.T) {
 		collector := NewCollector()
-		testutil.RequireNotNil(t, collector.ConnectionCount)
+		require.NotNil(t, collector.ConnectionCount)
 
 		// Test incrementing connections
 		collector.ConnectionCount.WithLabelValues("test-service").Inc()
-		testutil.AssertEqual(t, float64(1), promtestutil.ToFloat64(collector.ConnectionCount.WithLabelValues("test-service")))
+		assert.Equal(t, float64(1), promtestutil.ToFloat64(collector.ConnectionCount.WithLabelValues("test-service")))
 
 		// Test decrementing connections
 		collector.ConnectionCount.WithLabelValues("test-service").Dec()
-		testutil.AssertEqual(t, float64(0), promtestutil.ToFloat64(collector.ConnectionCount.WithLabelValues("test-service")))
+		assert.Equal(t, float64(0), promtestutil.ToFloat64(collector.ConnectionCount.WithLabelValues("test-service")))
 	})
 
 	t.Run("WhoisDurationHistogram", func(t *testing.T) {
 		collector := NewCollector()
-		testutil.RequireNotNil(t, collector.WhoisDuration)
+		require.NotNil(t, collector.WhoisDuration)
 
 		// Test recording whois lookup duration
 		start := time.Now()
@@ -341,46 +342,46 @@ func TestEnhancedMetrics(t *testing.T) {
 		// Verify histogram was updated
 		metric := &dto.Metric{}
 		err := collector.WhoisDuration.WithLabelValues("test-service").(prometheus.Histogram).Write(metric)
-		testutil.RequireNoError(t, err)
-		testutil.AssertGreater(t, metric.Histogram.GetSampleCount(), uint64(0))
+		require.NoError(t, err)
+		assert.Greater(t, metric.Histogram.GetSampleCount(), uint64(0))
 	})
 
 	t.Run("OAuthRefreshCounter", func(t *testing.T) {
 		collector := NewCollector()
-		testutil.RequireNotNil(t, collector.OAuthRefreshTotal)
+		require.NotNil(t, collector.OAuthRefreshTotal)
 
 		// Test counting OAuth refreshes
 		collector.OAuthRefreshTotal.WithLabelValues("success").Inc()
-		testutil.AssertEqual(t, float64(1), promtestutil.ToFloat64(collector.OAuthRefreshTotal.WithLabelValues("success")))
+		assert.Equal(t, float64(1), promtestutil.ToFloat64(collector.OAuthRefreshTotal.WithLabelValues("success")))
 
 		collector.OAuthRefreshTotal.WithLabelValues("failure").Inc()
-		testutil.AssertEqual(t, float64(1), promtestutil.ToFloat64(collector.OAuthRefreshTotal.WithLabelValues("failure")))
+		assert.Equal(t, float64(1), promtestutil.ToFloat64(collector.OAuthRefreshTotal.WithLabelValues("failure")))
 	})
 
 	t.Run("BackendHealthGauge", func(t *testing.T) {
 		collector := NewCollector()
-		testutil.RequireNotNil(t, collector.BackendHealth)
+		require.NotNil(t, collector.BackendHealth)
 
 		// Test setting backend health status
 		collector.SetBackendHealth("test-service", true)
-		testutil.AssertEqual(t, float64(1), promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues("test-service")))
+		assert.Equal(t, float64(1), promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues("test-service")))
 
 		collector.SetBackendHealth("test-service", false)
-		testutil.AssertEqual(t, float64(0), promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues("test-service")))
+		assert.Equal(t, float64(0), promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues("test-service")))
 	})
 
 	t.Run("ConnectionPoolMetrics", func(t *testing.T) {
 		collector := NewCollector()
-		testutil.RequireNotNil(t, collector.ConnectionPoolActive)
-		testutil.RequireNotNil(t, collector.ConnectionPoolIdle)
-		testutil.RequireNotNil(t, collector.ConnectionPoolWait)
+		require.NotNil(t, collector.ConnectionPoolActive)
+		require.NotNil(t, collector.ConnectionPoolIdle)
+		require.NotNil(t, collector.ConnectionPoolWait)
 
 		// Test updating connection pool metrics
 		collector.UpdateConnectionPoolMetrics("test-service", 5, 3, 2)
 
-		testutil.AssertEqual(t, float64(5), promtestutil.ToFloat64(collector.ConnectionPoolActive.WithLabelValues("test-service")))
-		testutil.AssertEqual(t, float64(3), promtestutil.ToFloat64(collector.ConnectionPoolIdle.WithLabelValues("test-service")))
-		testutil.AssertEqual(t, float64(2), promtestutil.ToFloat64(collector.ConnectionPoolWait.WithLabelValues("test-service")))
+		assert.Equal(t, float64(5), promtestutil.ToFloat64(collector.ConnectionPoolActive.WithLabelValues("test-service")))
+		assert.Equal(t, float64(3), promtestutil.ToFloat64(collector.ConnectionPoolIdle.WithLabelValues("test-service")))
+		assert.Equal(t, float64(2), promtestutil.ToFloat64(collector.ConnectionPoolWait.WithLabelValues("test-service")))
 	})
 
 	t.Run("MetricsRegistration", func(t *testing.T) {
@@ -389,7 +390,7 @@ func TestEnhancedMetrics(t *testing.T) {
 
 		// All new metrics should register successfully
 		err := collector.Register(registry)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -402,10 +403,10 @@ func TestRecordWhoisDuration(t *testing.T) {
 	// Verify the histogram has a sample
 	metric := &dto.Metric{}
 	err := collector.WhoisDuration.WithLabelValues("test-service").(prometheus.Histogram).Write(metric)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
-	testutil.AssertEqual(t, uint64(1), metric.GetHistogram().GetSampleCount())
-	testutil.AssertInDelta(t, 0.1, metric.GetHistogram().GetSampleSum(), 0.001)
+	assert.Equal(t, uint64(1), metric.GetHistogram().GetSampleCount())
+	assert.InDelta(t, 0.1, metric.GetHistogram().GetSampleSum(), 0.001)
 }
 
 func TestSetBackendHealth(t *testing.T) {
@@ -426,33 +427,33 @@ func TestSetBackendHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			collector.SetBackendHealth(tt.service, tt.healthy)
-			testutil.AssertEqual(t, tt.expected, promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues(tt.service)))
+			assert.Equal(t, tt.expected, promtestutil.ToFloat64(collector.BackendHealth.WithLabelValues(tt.service)))
 		})
 	}
 
 	t.Run("server startup failure returns startup error", func(t *testing.T) {
 		server1 := NewServer("invalid:address:format") // Invalid address
 		err := server1.Start(context.Background())
-		testutil.AssertError(t, err)
-		testutil.AssertError(t, err, "failed to listen on")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to listen on")
 		defer server1.Shutdown(context.Background())
 	})
 
 	t.Run("graceful shutdown", func(t *testing.T) {
 		server2 := NewServer(":0")
 		err := server2.Start(context.Background())
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 
 		// Ensure we have a valid address
 		addr := server2.Addr()
-		testutil.AssertNotEmpty(t, addr)
+		assert.NotEmpty(t, addr)
 
 		// Shutdown with a valid context should succeed
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		err = server2.Shutdown(ctx)
-		testutil.AssertNoError(t, err)
+		assert.NoError(t, err)
 	})
 }
 
@@ -475,9 +476,9 @@ func TestUpdateConnectionPoolMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			collector.UpdateConnectionPoolMetrics(tt.service, tt.active, tt.idle, tt.wait)
 
-			testutil.AssertEqual(t, float64(tt.active), promtestutil.ToFloat64(collector.ConnectionPoolActive.WithLabelValues(tt.service)))
-			testutil.AssertEqual(t, float64(tt.idle), promtestutil.ToFloat64(collector.ConnectionPoolIdle.WithLabelValues(tt.service)))
-			testutil.AssertEqual(t, float64(tt.wait), promtestutil.ToFloat64(collector.ConnectionPoolWait.WithLabelValues(tt.service)))
+			assert.Equal(t, float64(tt.active), promtestutil.ToFloat64(collector.ConnectionPoolActive.WithLabelValues(tt.service)))
+			assert.Equal(t, float64(tt.idle), promtestutil.ToFloat64(collector.ConnectionPoolIdle.WithLabelValues(tt.service)))
+			assert.Equal(t, float64(tt.wait), promtestutil.ToFloat64(collector.ConnectionPoolWait.WithLabelValues(tt.service)))
 		})
 	}
 }
@@ -586,7 +587,7 @@ func TestMetricsEndpoint(t *testing.T) {
 	collector := NewCollector()
 	reg := prometheus.NewRegistry()
 	err := collector.Register(reg)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Add default Go metrics to ensure we have some output
 	reg.MustRegister(collectors.NewGoCollector())
@@ -594,7 +595,7 @@ func TestMetricsEndpoint(t *testing.T) {
 	// Start metrics server
 	metricsServer := NewServerWithRegistry(":0", reg, 5*time.Second)
 	err = metricsServer.Start(context.TODO())
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer func() {
 		_ = metricsServer.Shutdown(context.TODO())
 	}()
@@ -604,17 +605,17 @@ func TestMetricsEndpoint(t *testing.T) {
 
 	// Test 1: Metrics endpoint should be accessible
 	resp, err := http.Get(metricsURL)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	testutil.AssertEqual(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	body, err := io.ReadAll(resp.Body)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Should contain Prometheus metrics format
 	bodyStr := string(body)
-	testutil.AssertContains(t, bodyStr, "# HELP")
+	assert.Contains(t, bodyStr, "# HELP")
 
 	// Test 2: Metrics should include our custom metrics (initially empty)
 	// Record some test metrics
@@ -624,11 +625,11 @@ func TestMetricsEndpoint(t *testing.T) {
 
 	// Fetch metrics again
 	resp2, err := http.Get(metricsURL)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer resp2.Body.Close()
 
 	body2, err := io.ReadAll(resp2.Body)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	bodyStr2 := string(body2)
 
@@ -640,11 +641,11 @@ func TestMetricsEndpoint(t *testing.T) {
 	}
 
 	for _, metric := range expectedMetrics {
-		testutil.AssertContains(t, bodyStr2, metric)
+		assert.Contains(t, bodyStr2, metric)
 	}
 
 	// Should contain the test service label
-	testutil.AssertContains(t, bodyStr2, `service="test-service"`)
+	assert.Contains(t, bodyStr2, `service="test-service"`)
 }
 
 func TestMetricsMiddlewareIntegration(t *testing.T) {
@@ -663,7 +664,7 @@ func TestMetricsMiddlewareIntegration(t *testing.T) {
 	collector := NewCollector()
 	reg := prometheus.NewRegistry()
 	err := collector.Register(reg)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Create handler with middleware
 	baseHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -695,13 +696,13 @@ func TestMetricsMiddlewareIntegration(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 
-		testutil.AssertEqual(t, tr.expectedStatus, rr.Code)
+		assert.Equal(t, tr.expectedStatus, rr.Code)
 	}
 
 	// Start metrics server to check the metrics
 	metricsServer := NewServerWithRegistry(":0", reg, 5*time.Second)
 	err = metricsServer.Start(context.TODO())
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer func() {
 		_ = metricsServer.Shutdown(context.TODO())
 	}()
@@ -709,47 +710,47 @@ func TestMetricsMiddlewareIntegration(t *testing.T) {
 	// Get metrics
 	metricsURL := fmt.Sprintf("http://%s/metrics", metricsServer.Addr())
 	resp, err := http.Get(metricsURL)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	bodyStr := string(body)
 
 	// Verify metrics were recorded
 	// Should have 3 requests with status 200
-	testutil.AssertContains(t, bodyStr, `tsbridge_requests_total{service="test-api",status="200"} 3`)
+	assert.Contains(t, bodyStr, `tsbridge_requests_total{service="test-api",status="200"} 3`)
 
 	// Should have 1 request with status 500
-	testutil.AssertContains(t, bodyStr, `tsbridge_requests_total{service="test-api",status="500"} 1`)
+	assert.Contains(t, bodyStr, `tsbridge_requests_total{service="test-api",status="500"} 1`)
 
 	// Should have request duration metrics
-	testutil.AssertContains(t, bodyStr, `tsbridge_request_duration_seconds_count{service="test-api"} 4`)
+	assert.Contains(t, bodyStr, `tsbridge_request_duration_seconds_count{service="test-api"} 4`)
 }
 
 func TestMetricsServerGracefulShutdown(t *testing.T) {
 	// Create metrics server
 	metricsServer := NewServer(":0")
 	err := metricsServer.Start(context.TODO())
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 
 	// Verify it's running
 	metricsURL := fmt.Sprintf("http://%s/metrics", metricsServer.Addr())
 	resp, err := http.Get(metricsURL)
-	testutil.RequireNoError(t, err)
+	require.NoError(t, err)
 	resp.Body.Close()
 
-	testutil.AssertEqual(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Shutdown the server
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	err = metricsServer.Shutdown(shutdownCtx)
-	testutil.AssertNoError(t, err)
+	assert.NoError(t, err)
 
 	// Verify it's no longer accessible
 	_, err = http.Get(metricsURL)
-	testutil.AssertError(t, err)
+	assert.Error(t, err)
 }

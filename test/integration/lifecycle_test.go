@@ -3,8 +3,8 @@ package integration
 import (
 	"testing"
 
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestInMemoryAppLifecycle was removed - this behavior is already tested in:
@@ -36,14 +36,14 @@ func TestE2EServiceCreationAndLifecycle(t *testing.T) {
 	output := process.GetOutput()
 
 	// Verify both services started
-	testutil.AssertContains(t, output, `msg="started service" service=service1`)
-	testutil.AssertContains(t, output, `msg="started service" service=service2`)
+	assert.Contains(t, output, `msg="started service" service=service1`)
+	assert.Contains(t, output, `msg="started service" service=service2`)
 
 	// Verify metrics server started
-	testutil.AssertContains(t, output, "metrics server listening")
+	assert.Contains(t, output, "metrics server listening")
 
 	// Verify clean shutdown
-	testutil.AssertContains(t, output, "shutdown complete")
+	assert.Contains(t, output, "shutdown complete")
 
 	// Log request counts (in test mode, services start but don't serve)
 	t.Logf("Backend1 requests: %d", tracker1.RequestsCompleted)

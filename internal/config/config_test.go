@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
@@ -17,28 +18,28 @@ func TestLoad(t *testing.T) {
 
 	t.Run("empty config path returns error", func(t *testing.T) {
 		_, err := Load("")
-		testutil.AssertError(t, err)
-		testutil.AssertError(t, err, "config path cannot be empty")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "config path cannot be empty")
 	})
 
 	t.Run("nonexistent config file returns error", func(t *testing.T) {
 		_, err := Load("/nonexistent/config.toml")
-		testutil.AssertError(t, err)
-		testutil.AssertError(t, err, "loading config file")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "loading config file")
 	})
 
 	t.Run("malformed TOML returns error", func(t *testing.T) {
 		tmpfile, err := os.CreateTemp("", "invalid-*.toml")
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		defer os.Remove(tmpfile.Name())
 
 		_, err = tmpfile.WriteString("invalid toml [[[")
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		tmpfile.Close()
 
 		_, err = Load(tmpfile.Name())
-		testutil.AssertError(t, err)
-		testutil.AssertError(t, err, "loading config file")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "loading config file")
 	})
 
 	// Test secret resolution from env vars
@@ -57,19 +58,19 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set the custom environment variables
 		t.Setenv("CUSTOM_CLIENT_ID", "resolved-client-id")
 		t.Setenv("CUSTOM_SECRET", "resolved-secret")
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
 		// Secrets should be resolved from the specified env vars
-		testutil.AssertEqual(t, "resolved-client-id", cfg.Tailscale.OAuthClientID)
-		testutil.AssertEqual(t, "resolved-secret", cfg.Tailscale.OAuthClientSecret)
+		assert.Equal(t, "resolved-client-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "resolved-secret", cfg.Tailscale.OAuthClientSecret)
 	})
 
 	// Test secret resolution from files
@@ -78,8 +79,8 @@ backend_addr = "localhost:8080"
 		clientIDFile := filepath.Join(tmpDir, "client-id.txt")
 		secretFile := filepath.Join(tmpDir, "secret.txt")
 
-		testutil.RequireNoError(t, os.WriteFile(clientIDFile, []byte("file-client-id"), 0600))
-		testutil.RequireNoError(t, os.WriteFile(secretFile, []byte("file-secret"), 0600))
+		require.NoError(t, os.WriteFile(clientIDFile, []byte("file-client-id"), 0600))
+		require.NoError(t, os.WriteFile(secretFile, []byte("file-secret"), 0600))
 
 		configContent := `
 [tailscale]
@@ -95,15 +96,15 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(tmpDir, "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
 		// Secrets should be resolved from files
-		testutil.AssertEqual(t, "file-client-id", cfg.Tailscale.OAuthClientID)
-		testutil.AssertEqual(t, "file-secret", cfg.Tailscale.OAuthClientSecret)
+		assert.Equal(t, "file-client-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "file-secret", cfg.Tailscale.OAuthClientSecret)
 	})
 
 	// Test default values
@@ -119,40 +120,40 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
 		// Check that defaults are applied
-		testutil.AssertEqual(t, 30*time.Second, cfg.Global.ReadTimeout.Duration)
-		testutil.AssertEqual(t, 30*time.Second, cfg.Global.WriteTimeout.Duration)
-		testutil.AssertEqual(t, 120*time.Second, cfg.Global.IdleTimeout.Duration)
-		testutil.AssertEqual(t, 3, cfg.Global.RetryCount)
-		testutil.AssertEqual(t, 1*time.Second, cfg.Global.RetryDelay.Duration)
-		testutil.AssertEqual(t, 30*time.Second, cfg.Global.ShutdownTimeout.Duration)
+		assert.Equal(t, 30*time.Second, cfg.Global.ReadTimeout.Duration)
+		assert.Equal(t, 30*time.Second, cfg.Global.WriteTimeout.Duration)
+		assert.Equal(t, 120*time.Second, cfg.Global.IdleTimeout.Duration)
+		assert.Equal(t, 3, cfg.Global.RetryCount)
+		assert.Equal(t, 1*time.Second, cfg.Global.RetryDelay.Duration)
+		assert.Equal(t, 30*time.Second, cfg.Global.ShutdownTimeout.Duration)
 
 		// Service defaults
 		svc := cfg.Services[0]
-		testutil.AssertNotNil(t, svc.WhoisEnabled)
-		testutil.AssertFalse(t, *svc.WhoisEnabled)
-		testutil.AssertEqual(t, 5*time.Second, svc.WhoisTimeout.Duration)
-		testutil.AssertEqual(t, "auto", svc.TLSMode)
+		assert.NotNil(t, svc.WhoisEnabled)
+		assert.False(t, *svc.WhoisEnabled)
+		assert.Equal(t, 5*time.Second, svc.WhoisTimeout.Duration)
+		assert.Equal(t, "auto", svc.TLSMode)
 	})
 
 	// Test empty file path validation
 	t.Run("handles empty file path", func(t *testing.T) {
 		_, err := Load("")
-		testutil.RequireError(t, err)
-		testutil.AssertError(t, err, "config path cannot be empty")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "config path cannot be empty")
 	})
 
 	// Test priority: inline > env > file > fallback
 	t.Run("respects secret priority order", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		secretFile := filepath.Join(tmpDir, "secret.txt")
-		testutil.RequireNoError(t, os.WriteFile(secretFile, []byte("file-secret"), 0600))
+		require.NoError(t, os.WriteFile(secretFile, []byte("file-secret"), 0600))
 
 		configContent := `
 [tailscale]
@@ -170,18 +171,18 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(tmpDir, "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set environment variables
 		t.Setenv("CUSTOM_SECRET", "env-secret")
 		t.Setenv("TS_OAUTH_CLIENT_SECRET", "fallback-secret") // Should not be used
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "inline-id", cfg.Tailscale.OAuthClientID)      // Inline wins
-		testutil.AssertEqual(t, "env-secret", cfg.Tailscale.OAuthClientSecret) // Env specified
+		assert.Equal(t, "inline-id", cfg.Tailscale.OAuthClientID)      // Inline wins
+		assert.Equal(t, "env-secret", cfg.Tailscale.OAuthClientSecret) // Env specified
 	})
 
 	t.Run("OAuth secret resolution from files", func(t *testing.T) {
@@ -191,8 +192,8 @@ backend_addr = "localhost:8080"
 		clientIDFile := filepath.Join(tmpDir, "client_id.txt")
 		clientSecretFile := filepath.Join(tmpDir, "client_secret.txt")
 
-		testutil.RequireNoError(t, os.WriteFile(clientIDFile, []byte("file-client-id"), 0600))
-		testutil.RequireNoError(t, os.WriteFile(clientSecretFile, []byte("file-client-secret"), 0600))
+		require.NoError(t, os.WriteFile(clientIDFile, []byte("file-client-id"), 0600))
+		require.NoError(t, os.WriteFile(clientSecretFile, []byte("file-client-secret"), 0600))
 
 		configContent := `
 [tailscale]
@@ -208,14 +209,14 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(tmpDir, "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "file-client-id", cfg.Tailscale.OAuthClientID)
-		testutil.AssertEqual(t, "file-client-secret", cfg.Tailscale.OAuthClientSecret)
+		assert.Equal(t, "file-client-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "file-client-secret", cfg.Tailscale.OAuthClientSecret)
 	})
 
 	t.Run("auth key resolution from file", func(t *testing.T) {
@@ -223,7 +224,7 @@ backend_addr = "localhost:8080"
 
 		// Create auth key file
 		authKeyFile := filepath.Join(tmpDir, "auth_key.txt")
-		testutil.RequireNoError(t, os.WriteFile(authKeyFile, []byte("file-auth-key"), 0600))
+		require.NoError(t, os.WriteFile(authKeyFile, []byte("file-auth-key"), 0600))
 
 		configContent := `
 [tailscale]
@@ -238,13 +239,13 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(tmpDir, "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "file-auth-key", cfg.Tailscale.AuthKey)
+		assert.Equal(t, "file-auth-key", cfg.Tailscale.AuthKey)
 	})
 
 	t.Run("fallback to TS_ OAuth environment variables", func(t *testing.T) {
@@ -261,18 +262,18 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set fallback OAuth environment variables (not auth key to avoid conflict)
 		t.Setenv("TS_OAUTH_CLIENT_ID", "fallback-client-id")
 		t.Setenv("TS_OAUTH_CLIENT_SECRET", "fallback-client-secret")
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "fallback-client-id", cfg.Tailscale.OAuthClientID)
-		testutil.AssertEqual(t, "fallback-client-secret", cfg.Tailscale.OAuthClientSecret)
+		assert.Equal(t, "fallback-client-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "fallback-client-secret", cfg.Tailscale.OAuthClientSecret)
 	})
 
 	t.Run("fallback to TS_AUTHKEY environment variable", func(t *testing.T) {
@@ -289,16 +290,16 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set fallback auth key environment variable only
 		t.Setenv("TS_AUTHKEY", "fallback-auth-key")
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "fallback-auth-key", cfg.Tailscale.AuthKey)
+		assert.Equal(t, "fallback-auth-key", cfg.Tailscale.AuthKey)
 	})
 
 	t.Run("TSBRIDGE_ environment variables override config", func(t *testing.T) {
@@ -317,20 +318,20 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set TSBRIDGE_ environment variables to override
 		t.Setenv("TSBRIDGE_TAILSCALE_OAUTH_CLIENT_ID", "tsbridge-override-id")
 		t.Setenv("TSBRIDGE_GLOBAL_READ_TIMEOUT", "60s")
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, "tsbridge-override-id", cfg.Tailscale.OAuthClientID)
-		testutil.AssertEqual(t, "config-secret", cfg.Tailscale.OAuthClientSecret) // Not overridden
-		testutil.AssertEqual(t, 60*time.Second, cfg.Global.ReadTimeout.Duration)
-		testutil.AssertEqual(t, 40*time.Second, cfg.Global.WriteTimeout.Duration) // Not overridden
+		assert.Equal(t, "tsbridge-override-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "config-secret", cfg.Tailscale.OAuthClientSecret) // Not overridden
+		assert.Equal(t, 60*time.Second, cfg.Global.ReadTimeout.Duration)
+		assert.Equal(t, 40*time.Second, cfg.Global.WriteTimeout.Duration) // Not overridden
 	})
 
 	t.Run("validation error propagates", func(t *testing.T) {
@@ -347,12 +348,12 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		_, err := Load(tmpFile)
-		testutil.AssertError(t, err)
+		assert.Error(t, err)
 		// The error message now mentions OAuth client ID specifically
-		testutil.AssertError(t, err, "OAuth client ID must be provided")
+		assert.Contains(t, err.Error(), "OAuth client ID must be provided")
 	})
 
 	t.Run("error from secret file resolution", func(t *testing.T) {
@@ -369,11 +370,11 @@ backend_addr = "localhost:8080"
 `
 
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		_, err := Load(tmpFile)
-		testutil.AssertError(t, err)
-		testutil.AssertError(t, err, "resolving OAuth client ID")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "resolving OAuth client ID")
 	})
 }
 func TestResolveSecrets(t *testing.T) {
@@ -1581,7 +1582,7 @@ func TestLoadConfigErrorTypes(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.toml")
 		err := os.WriteFile(configPath, []byte("invalid = toml syntax ["), 0600)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 
 		_, err = Load(configPath)
 		if err == nil {
@@ -1626,8 +1627,8 @@ func TestAccessLoggingConfiguration(t *testing.T) {
 		cfg := &Config{}
 		cfg.SetDefaults()
 
-		testutil.AssertNotNil(t, cfg.Global.AccessLog)
-		testutil.AssertTrue(t, *cfg.Global.AccessLog)
+		assert.NotNil(t, cfg.Global.AccessLog)
+		assert.True(t, *cfg.Global.AccessLog)
 	})
 
 	// Test explicit false is preserved
@@ -1640,8 +1641,8 @@ func TestAccessLoggingConfiguration(t *testing.T) {
 		}
 		cfg.SetDefaults()
 
-		testutil.AssertNotNil(t, cfg.Global.AccessLog)
-		testutil.AssertFalse(t, *cfg.Global.AccessLog)
+		assert.NotNil(t, cfg.Global.AccessLog)
+		assert.False(t, *cfg.Global.AccessLog)
 	})
 }
 
@@ -1661,15 +1662,15 @@ backend_addr = "localhost:8080"
 funnel_enabled = true
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertNotNil(t, cfg.Services[0].FunnelEnabled)
-		testutil.AssertTrue(t, *cfg.Services[0].FunnelEnabled)
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.NotNil(t, cfg.Services[0].FunnelEnabled)
+		assert.True(t, *cfg.Services[0].FunnelEnabled)
 	})
 
 	// Test funnel disabled config
@@ -1687,15 +1688,15 @@ backend_addr = "localhost:8080"
 funnel_enabled = false
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertNotNil(t, cfg.Services[0].FunnelEnabled)
-		testutil.AssertFalse(t, *cfg.Services[0].FunnelEnabled)
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.NotNil(t, cfg.Services[0].FunnelEnabled)
+		assert.False(t, *cfg.Services[0].FunnelEnabled)
 	})
 
 	// Test funnel not specified (nil)
@@ -1712,14 +1713,14 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertNil(t, cfg.Services[0].FunnelEnabled)
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.Nil(t, cfg.Services[0].FunnelEnabled)
 	})
 
 	// Test transport timeout configurations
@@ -1741,17 +1742,17 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 15*time.Second, cfg.Global.DialTimeout.Duration)
-		testutil.AssertEqual(t, 20*time.Second, cfg.Global.KeepAliveTimeout.Duration)
-		testutil.AssertEqual(t, 60*time.Second, cfg.Global.IdleConnTimeout.Duration)
-		testutil.AssertEqual(t, 5*time.Second, cfg.Global.TLSHandshakeTimeout.Duration)
-		testutil.AssertEqual(t, 2*time.Second, cfg.Global.ExpectContinueTimeout.Duration)
+		assert.Equal(t, 15*time.Second, cfg.Global.DialTimeout.Duration)
+		assert.Equal(t, 20*time.Second, cfg.Global.KeepAliveTimeout.Duration)
+		assert.Equal(t, 60*time.Second, cfg.Global.IdleConnTimeout.Duration)
+		assert.Equal(t, 5*time.Second, cfg.Global.TLSHandshakeTimeout.Duration)
+		assert.Equal(t, 2*time.Second, cfg.Global.ExpectContinueTimeout.Duration)
 	})
 
 	// Test transport timeouts use defaults when not specified
@@ -1768,18 +1769,18 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
 		// Check that defaults are set
-		testutil.AssertEqual(t, 30*time.Second, cfg.Global.DialTimeout.Duration)
-		testutil.AssertEqual(t, 30*time.Second, cfg.Global.KeepAliveTimeout.Duration)
-		testutil.AssertEqual(t, 90*time.Second, cfg.Global.IdleConnTimeout.Duration)
-		testutil.AssertEqual(t, 10*time.Second, cfg.Global.TLSHandshakeTimeout.Duration)
-		testutil.AssertEqual(t, 1*time.Second, cfg.Global.ExpectContinueTimeout.Duration)
+		assert.Equal(t, 30*time.Second, cfg.Global.DialTimeout.Duration)
+		assert.Equal(t, 30*time.Second, cfg.Global.KeepAliveTimeout.Duration)
+		assert.Equal(t, 90*time.Second, cfg.Global.IdleConnTimeout.Duration)
+		assert.Equal(t, 10*time.Second, cfg.Global.TLSHandshakeTimeout.Duration)
+		assert.Equal(t, 1*time.Second, cfg.Global.ExpectContinueTimeout.Duration)
 	})
 
 	// Test metrics server timeout configuration
@@ -1798,13 +1799,13 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 10*time.Second, cfg.Global.MetricsReadHeaderTimeout.Duration)
+		assert.Equal(t, 10*time.Second, cfg.Global.MetricsReadHeaderTimeout.Duration)
 	})
 
 	// Test metrics server timeout default
@@ -1822,14 +1823,14 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
 		// Check that default is set
-		testutil.AssertEqual(t, 5*time.Second, cfg.Global.MetricsReadHeaderTimeout.Duration)
+		assert.Equal(t, 5*time.Second, cfg.Global.MetricsReadHeaderTimeout.Duration)
 	})
 }
 
@@ -1849,14 +1850,14 @@ backend_addr = "localhost:8080"
 ephemeral = true
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertTrue(t, cfg.Services[0].Ephemeral)
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.True(t, cfg.Services[0].Ephemeral)
 	})
 
 	// Test ephemeral disabled config
@@ -1874,14 +1875,14 @@ backend_addr = "localhost:8080"
 ephemeral = false
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertFalse(t, cfg.Services[0].Ephemeral)
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.False(t, cfg.Services[0].Ephemeral)
 	})
 
 	// Test ephemeral defaults to false when not specified
@@ -1898,14 +1899,14 @@ name = "api"
 backend_addr = "localhost:8080"
 `
 		tmpFile := filepath.Join(t.TempDir(), "config.toml")
-		testutil.RequireNoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
+		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		cfg, err := Load(tmpFile)
-		testutil.RequireNoError(t, err)
-		testutil.RequireNotNil(t, cfg)
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
 
-		testutil.AssertEqual(t, 1, len(cfg.Services))
-		testutil.AssertFalse(t, cfg.Services[0].Ephemeral) // Should default to false
+		assert.Equal(t, 1, len(cfg.Services))
+		assert.False(t, cfg.Services[0].Ephemeral) // Should default to false
 	})
 }
 
@@ -1927,10 +1928,10 @@ func TestProcessLoadedConfig(t *testing.T) {
 		}
 
 		// Write auth key file
-		testutil.AssertNoError(t, os.WriteFile(cfg.Tailscale.AuthKeyFile, []byte("test-auth-key"), 0600))
+		assert.NoError(t, os.WriteFile(cfg.Tailscale.AuthKeyFile, []byte("test-auth-key"), 0600))
 
 		err := ProcessLoadedConfig(cfg)
-		testutil.AssertNoError(t, err)
+		assert.NoError(t, err)
 
 		// Verify secrets were resolved
 		if cfg.Tailscale.AuthKey != "test-auth-key" {
@@ -1954,7 +1955,7 @@ func TestProcessLoadedConfig(t *testing.T) {
 		}
 
 		err := ProcessLoadedConfig(cfg)
-		testutil.AssertError(t, err)
+		assert.Error(t, err)
 		if !strings.Contains(err.Error(), "resolving secrets") {
 			t.Errorf("expected error to contain 'resolving secrets', got %v", err)
 		}
@@ -1971,7 +1972,7 @@ func TestProcessLoadedConfig(t *testing.T) {
 		}
 
 		err := ProcessLoadedConfig(cfg)
-		testutil.AssertError(t, err)
+		assert.Error(t, err)
 		if !strings.Contains(err.Error(), "validating config") {
 			t.Errorf("expected error to contain 'validating config', got %v", err)
 		}

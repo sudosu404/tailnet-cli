@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -53,7 +53,7 @@ func TestSignalHandlingSimplicity(t *testing.T) {
 	// Verify context was cancelled
 	select {
 	case <-ctx.Done():
-		testutil.AssertEqual(t, context.Canceled, ctx.Err())
+		assert.Equal(t, context.Canceled, ctx.Err())
 	default:
 		t.Fatal("Context was not cancelled after signal")
 	}
@@ -94,10 +94,10 @@ func TestExitFuncAllowsDeferExecution(t *testing.T) {
 	}()
 
 	// Verify behavior
-	testutil.AssertTrue(t, exitCalled, "exitFunc should have been called")
-	testutil.AssertEqual(t, 1, exitCode)
-	testutil.AssertTrue(t, deferExecuted, "defer should have been executed")
-	testutil.AssertContains(t, logBuf.String(), "test error")
+	assert.True(t, exitCalled, "exitFunc should have been called")
+	assert.Equal(t, 1, exitCode)
+	assert.True(t, deferExecuted, "defer should have been executed")
+	assert.Contains(t, logBuf.String(), "test error")
 }
 
 // TestExitFuncInSignalHandler verifies exitFunc works in goroutines too
@@ -130,8 +130,8 @@ func TestExitFuncInSignalHandler(t *testing.T) {
 	// Wait for exit
 	select {
 	case code := <-exitChan:
-		testutil.AssertEqual(t, 1, code)
-		testutil.AssertContains(t, logBuf.String(), "shutdown error")
+		assert.Equal(t, 1, code)
+		assert.Contains(t, logBuf.String(), "shutdown error")
 	case <-time.After(time.Second):
 		t.Fatal("exitFunc was not called within timeout")
 	}
@@ -151,7 +151,7 @@ func TestRegisterProviders(t *testing.T) {
 
 	// Verify both providers are registered
 	providers := testRegistry.List()
-	testutil.AssertEqual(t, 2, len(providers))
+	assert.Equal(t, 2, len(providers))
 
 	// Helper to check if string is in slice
 	contains := func(slice []string, str string) bool {
@@ -163,14 +163,14 @@ func TestRegisterProviders(t *testing.T) {
 		return false
 	}
 
-	testutil.AssertTrue(t, contains(providers, "file"), "file provider should be registered")
-	testutil.AssertTrue(t, contains(providers, "docker"), "docker provider should be registered")
+	assert.True(t, contains(providers, "file"), "file provider should be registered")
+	assert.True(t, contains(providers, "docker"), "docker provider should be registered")
 
 	// Verify file provider works
 	fileProvider, err := testRegistry.Get("file", config.FileProviderOptions{Path: "/test/path"})
-	testutil.AssertNil(t, err)
-	testutil.AssertNotNil(t, fileProvider)
-	testutil.AssertEqual(t, "file", fileProvider.Name())
+	assert.Nil(t, err)
+	assert.NotNil(t, fileProvider)
+	assert.Equal(t, "file", fileProvider.Name())
 
 	// Verify docker provider factory is registered
 	provider, err := testRegistry.Get("docker", config.DockerProviderOptions{})
@@ -179,10 +179,10 @@ func TestRegisterProviders(t *testing.T) {
 	// In CI environments, Docker might be available and creation could succeed
 	if err != nil {
 		// If there's an error, it should NOT be about the provider not being registered
-		testutil.AssertNotContains(t, err.Error(), "provider not registered")
+		assert.NotContains(t, err.Error(), "provider not registered")
 	} else {
 		// If it succeeds, verify we got a valid provider
-		testutil.AssertNotNil(t, provider)
-		testutil.AssertEqual(t, "docker", provider.Name())
+		assert.NotNil(t, provider)
+		assert.Equal(t, "docker", provider.Name())
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 	"github.com/jtdowney/tsbridge/internal/middleware"
 	"github.com/jtdowney/tsbridge/internal/proxy"
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequestIDIntegration(t *testing.T) {
@@ -47,11 +47,11 @@ func TestRequestIDIntegration(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		// Verify response
-		testutil.AssertEqual(t, http.StatusOK, rr.Code)
-		testutil.AssertEqual(t, "test-request-123", rr.Header().Get("X-Request-ID"))
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "test-request-123", rr.Header().Get("X-Request-ID"))
 
 		// Verify backend received the request ID
-		testutil.AssertEqual(t, "test-request-123", capturedBackendHeaders.Get("X-Request-ID"))
+		assert.Equal(t, "test-request-123", capturedBackendHeaders.Get("X-Request-ID"))
 	})
 
 	// Test without provided request ID
@@ -65,15 +65,15 @@ func TestRequestIDIntegration(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		// Verify response
-		testutil.AssertEqual(t, http.StatusOK, rr.Code)
+		assert.Equal(t, http.StatusOK, rr.Code)
 
 		// Verify a request ID was generated
 		responseRequestID := rr.Header().Get("X-Request-ID")
-		testutil.AssertNotEmpty(t, responseRequestID)
-		testutil.AssertRegexp(t, `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`, responseRequestID)
+		assert.NotEmpty(t, responseRequestID)
+		assert.Regexp(t, `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`, responseRequestID)
 
 		// Verify backend received the generated request ID
-		testutil.AssertEqual(t, responseRequestID, capturedBackendHeaders.Get("X-Request-ID"))
+		assert.Equal(t, responseRequestID, capturedBackendHeaders.Get("X-Request-ID"))
 	})
 }
 
@@ -92,5 +92,5 @@ func TestRequestIDWithContext(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	testutil.AssertEqual(t, "context-test-456", contextRequestID)
+	assert.Equal(t, "context-test-456", contextRequestID)
 }

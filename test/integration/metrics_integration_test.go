@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/testutil"
 	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestInMemoryMetricsCollection was removed - this behavior is already tested in:
@@ -43,11 +43,11 @@ func TestE2EMetricsCollection(t *testing.T) {
 	output := process.GetOutput()
 
 	// Verify metrics server started
-	testutil.AssertContains(t, output, "metrics server listening")
+	assert.Contains(t, output, "metrics server listening")
 
 	// Verify both services started
-	testutil.AssertContains(t, output, `msg="started service" service=metrics-service1`)
-	testutil.AssertContains(t, output, `msg="started service" service=metrics-service2`)
+	assert.Contains(t, output, `msg="started service" service=metrics-service1`)
+	assert.Contains(t, output, `msg="started service" service=metrics-service2`)
 }
 
 // TestMetricsEndpointWithRealServer tests metrics endpoint with actual HTTP requests

@@ -3,7 +3,7 @@ package middleware
 import (
 	"bytes"
 	"fmt"
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -106,36 +106,36 @@ func TestAccessLog(t *testing.T) {
 			wrapped.ServeHTTP(rr, req)
 
 			// Check response
-			testutil.AssertEqual(t, tt.responseStatus, rr.Code)
+			assert.Equal(t, tt.responseStatus, rr.Code)
 
 			// Check logs
 			logOutput := buf.String()
 			if tt.wantLogged {
-				testutil.AssertNotEmpty(t, logOutput)
+				assert.NotEmpty(t, logOutput)
 
 				// Verify log contains expected fields
 				for field, value := range tt.checkFields {
 					if field == "request_id" && value == "" {
 						// Should not contain request_id field if empty
-						testutil.AssertNotContains(t, logOutput, `"request_id"`)
+						assert.NotContains(t, logOutput, `"request_id"`)
 					} else {
-						testutil.AssertContains(t, logOutput, field)
+						assert.Contains(t, logOutput, field)
 						// Convert value to string for comparison
 						switch v := value.(type) {
 						case string:
-							testutil.AssertContains(t, logOutput, v)
+							assert.Contains(t, logOutput, v)
 						case int:
-							testutil.AssertContains(t, logOutput, strings.TrimSpace(fmt.Sprintf("%d", v)))
+							assert.Contains(t, logOutput, strings.TrimSpace(fmt.Sprintf("%d", v)))
 						}
 					}
 				}
 
 				// Should always contain duration
-				testutil.AssertContains(t, logOutput, "duration_ms")
-				testutil.AssertContains(t, logOutput, "service")
-				testutil.AssertContains(t, logOutput, "test-service")
+				assert.Contains(t, logOutput, "duration_ms")
+				assert.Contains(t, logOutput, "service")
+				assert.Contains(t, logOutput, "test-service")
 			} else {
-				testutil.AssertEqual(t, "", logOutput)
+				assert.Equal(t, "", logOutput)
 			}
 		})
 	}
@@ -162,9 +162,9 @@ func TestAccessLogWithRequestIDFromContext(t *testing.T) {
 
 	// Check that log contains the generated request ID
 	logOutput := buf.String()
-	testutil.AssertContains(t, logOutput, "request_id")
+	assert.Contains(t, logOutput, "request_id")
 	// Should contain a UUID pattern
-	testutil.AssertRegexp(t, `"request_id":"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"`, logOutput)
+	assert.Regexp(t, `"request_id":"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"`, logOutput)
 }
 
 func TestAccessLogResponseWriter(t *testing.T) {
@@ -177,18 +177,18 @@ func TestAccessLogResponseWriter(t *testing.T) {
 	// Write some data
 	data := []byte("Hello, World!")
 	n, err := rw.Write(data)
-	testutil.AssertNoError(t, err)
-	testutil.AssertEqual(t, len(data), n)
-	testutil.AssertEqual(t, len(data), rw.size)
+	assert.NoError(t, err)
+	assert.Equal(t, len(data), n)
+	assert.Equal(t, len(data), rw.size)
 
 	// Write more data
 	moreData := []byte(" More data")
 	n, err = rw.Write(moreData)
-	testutil.AssertNoError(t, err)
-	testutil.AssertEqual(t, len(moreData), n)
-	testutil.AssertEqual(t, len(data)+len(moreData), rw.size)
+	assert.NoError(t, err)
+	assert.Equal(t, len(moreData), n)
+	assert.Equal(t, len(data)+len(moreData), rw.size)
 
 	// Test WriteHeader
 	rw.WriteHeader(http.StatusNotFound)
-	testutil.AssertEqual(t, http.StatusNotFound, rw.statusCode)
+	assert.Equal(t, http.StatusNotFound, rw.statusCode)
 }

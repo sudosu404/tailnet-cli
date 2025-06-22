@@ -7,7 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequestID(t *testing.T) {
@@ -66,14 +67,14 @@ func TestRequestID(t *testing.T) {
 				}
 			} else {
 				// Verify existing ID was used
-				testutil.AssertEqual(t, tt.incomingRequestID, capturedRequestID)
+				assert.Equal(t, tt.incomingRequestID, capturedRequestID)
 			}
 
 			// Verify request ID is in context
-			testutil.AssertEqual(t, capturedRequestID, GetRequestID(capturedContext))
+			assert.Equal(t, capturedRequestID, GetRequestID(capturedContext))
 
 			// Verify response header contains request ID
-			testutil.AssertEqual(t, capturedRequestID, rr.Header().Get("X-Request-ID"))
+			assert.Equal(t, capturedRequestID, rr.Header().Get("X-Request-ID"))
 		})
 	}
 }
@@ -93,7 +94,7 @@ func TestRequestIDPropagation(t *testing.T) {
 	proxyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Simulate proxy behavior - forward request with headers
 		backendReq, err := http.NewRequestWithContext(r.Context(), "GET", backend.URL, nil)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 
 		// Copy request ID to backend request
 		if requestID := GetRequestID(r.Context()); requestID != "" {
@@ -101,7 +102,7 @@ func TestRequestIDPropagation(t *testing.T) {
 		}
 
 		resp, err := http.DefaultClient.Do(backendReq)
-		testutil.RequireNoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		w.WriteHeader(resp.StatusCode)
@@ -119,12 +120,12 @@ func TestRequestIDPropagation(t *testing.T) {
 	wrapped.ServeHTTP(rr, req)
 
 	// Verify request ID was propagated to backend
-	testutil.AssertEqual(t, "test-request-123", backendRequestID)
+	assert.Equal(t, "test-request-123", backendRequestID)
 }
 
 func TestGetRequestIDFromEmptyContext(t *testing.T) {
 	// Test GetRequestID with context that doesn't have request ID
 	ctx := context.Background()
 	requestID := GetRequestID(ctx)
-	testutil.AssertEqual(t, "", requestID)
+	assert.Equal(t, "", requestID)
 }

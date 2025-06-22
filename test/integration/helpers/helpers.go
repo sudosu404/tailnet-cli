@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testutil"
+	"github.com/stretchr/testify/require"
 )
 
 // RequestTracker tracks requests to a test backend server.
@@ -192,16 +192,16 @@ func StartTSBridge(t *testing.T, configPath string, extraEnv ...string) *TSBridg
 
 	// Capture output
 	outputPipe, err := cmd.StdoutPipe()
-	testutil.RequireNoError(t, err, "failed to create stdout pipe")
+	require.NoError(t, err, "failed to create stdout pipe")
 
 	errPipe, err := cmd.StderrPipe()
-	testutil.RequireNoError(t, err, "failed to create stderr pipe")
+	require.NoError(t, err, "failed to create stderr pipe")
 
 	combinedOutput := io.MultiReader(outputPipe, errPipe)
 
 	// Start the process
 	err = cmd.Start()
-	testutil.RequireNoError(t, err, "failed to start tsbridge")
+	require.NoError(t, err, "failed to start tsbridge")
 
 	// Read output in goroutine
 	outputChan := make(chan string, 1)
@@ -348,7 +348,7 @@ whois_enabled = %s
 	}
 
 	err := os.WriteFile(configPath, []byte(content), 0600)
-	testutil.RequireNoError(t, err, "failed to write config file")
+	require.NoError(t, err, "failed to write config file")
 
 	return configPath
 }
