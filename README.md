@@ -2,6 +2,8 @@
 
 A lightweight proxy manager built on Tailscale's tsnet library that enables multiple HTTPS services on a Tailnet via a single TOML configuration file.
 
+> **Security Note**: tsbridge is designed for use in relatively trusted environments like home labs and development networks. It is not intended for security-critical production deployments. See [THREAT_MODEL.md](THREAT_MODEL.md) for details.
+
 ## Features
 
 - **Single Binary**: Easy deployment with no external dependencies
