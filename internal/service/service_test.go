@@ -43,15 +43,6 @@ func testTailscaleServerFactory() (*tailscale.Server, error) {
 	return tailscale.NewServerWithFactory(cfg, factory)
 }
 
-// MockTailscaleServer implements the necessary methods for testing
-type MockTailscaleServer struct {
-	serviceServers map[string]*MockTsnetServer
-}
-
-func (m *MockTailscaleServer) GetServiceServer(serviceName string) *MockTsnetServer {
-	return m.serviceServers[serviceName]
-}
-
 // MockTsnetServer simulates a tsnet.Server
 type MockTsnetServer struct {
 	whoisFunc func(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error)
