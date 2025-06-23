@@ -217,6 +217,9 @@ services:
   tsbridge:
     image: ghcr.io/jtdowney/tsbridge:latest
     command: ["--provider", "docker"]
+    environment:
+      - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
+      - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - tsbridge-state:/var/lib/tsbridge
