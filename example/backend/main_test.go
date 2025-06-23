@@ -6,12 +6,6 @@ import (
 	"testing"
 )
 
-// Example_backend demonstrates that the example backend compiles and runs
-func Example_backend() {
-	// This test ensures the example backend code compiles
-	// The actual example is run via docker-compose
-}
-
 // TestHealthEndpoint verifies the health check endpoint works
 func TestHealthEndpoint(t *testing.T) {
 	req, err := http.NewRequest("GET", "/health", nil)
