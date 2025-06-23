@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-06-23
+
 ### Changed
 
 - **BREAKING:** Removed retry configuration (`retry_count`, `retry_delay`, `retry_strategy`, `max_retry_attempts`) 
 - Simplified architecture to use lazy connections instead of startup validation
 - Services now always start successfully and handle backend connection failures at request time by returning appropriate HTTP error codes (502/504)
+- Replaced Docker polling with event-based monitoring for better performance and resource usage
 
 ## [0.3.1] - 2025-06-22
 
@@ -67,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.4.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.0
 [0.3.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.2.0
