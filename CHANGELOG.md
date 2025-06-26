@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-06-26
+
+### Added
+
+- ARM64 Docker image support in GoReleaser configuration (#11)
+
+### Fixed
+
+- Docker Compose example now includes proper environment section for OAuth credentials
+
+### Documentation
+
+- Added comprehensive threat model and security considerations documentation
+- Fixed Docker Compose example configuration
+
 ## [0.4.0] - 2025-06-23
 
 ### Changed
@@ -70,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.4.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.0
 [0.3.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.1
 [0.3.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.0
