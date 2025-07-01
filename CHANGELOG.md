@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-06-30
+
+### Added
+
+- Connection pool metrics collection for monitoring active requests (#16)
+  - Tracks active requests per service via Prometheus metrics
+  - Background goroutine collects metrics every 10 seconds
+  - Added Close() method to Handler interface for proper cleanup
+- Whois result caching to reduce resource usage (#15)
+  - LRU cache with 5-minute TTL and 1000 entry limit
+  - Prevents creating new goroutines for every request
+  - Cache is shared across all services for efficiency
+
+### Fixed
+
+- Request body drainage in proxy error handler to prevent resource leaks
+- Connection pool limits to prevent memory leaks
+  - Added MaxConnsPerHost (50) and MaxIdleConnsPerHost (10) limits
+  - Prevents unbounded connection growth
+
+### Dependencies
+
+- Bumped tailscale.com from 1.84.2 to 1.84.3 (#13)
+- Bumped github.com/docker/docker from 28.2.2 to 28.3.0 (#12)
+
 ## [0.4.1] - 2025-06-26
 
 ### Added
@@ -85,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.5.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.0
 [0.3.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.1
