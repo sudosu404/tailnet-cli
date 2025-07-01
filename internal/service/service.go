@@ -42,6 +42,20 @@ type Service struct {
 	handler          http.Handler // Pre-created handler to catch config errors early
 }
 
+// handlerWithClose wraps an http.Handler and preserves the Close method from the underlying proxy.Handler
+type handlerWithClose struct {
+	http.Handler
+	closeHandler proxy.Handler
+}
+
+// Close delegates to the underlying proxy handler's Close method
+func (h *handlerWithClose) Close() error {
+	if h.closeHandler != nil {
+		return h.closeHandler.Close()
+	}
+	return nil
+}
+
 // NewRegistry creates a new service registry
 func NewRegistry(cfg *config.Config, tsServer *tailscale.Server) *Registry {
 	return &Registry{
@@ -169,21 +183,40 @@ func (s *Service) CreateHandler() (http.Handler, error) {
 		transportConfig.ExpectContinueTimeout = s.globalConfig.Global.ExpectContinueTimeout.Duration
 	}
 
-	handler, err := proxy.NewHandlerWithHeaders(
-		s.Config.BackendAddr,
-		transportConfig,
-		trustedProxies,
-		s.Config.UpstreamHeaders,
-		s.Config.DownstreamHeaders,
-		s.Config.RemoveUpstream,
-		s.Config.RemoveDownstream,
-	)
+	var handler proxy.Handler
+	var err error
+	if s.metricsCollector != nil {
+		handler, err = proxy.NewHandlerWithMetrics(
+			s.Config.BackendAddr,
+			transportConfig,
+			trustedProxies,
+			s.metricsCollector,
+			s.Config.Name,
+			s.Config.UpstreamHeaders,
+			s.Config.DownstreamHeaders,
+			s.Config.RemoveUpstream,
+			s.Config.RemoveDownstream,
+		)
+	} else {
+		handler, err = proxy.NewHandlerWithHeaders(
+			s.Config.BackendAddr,
+			transportConfig,
+			trustedProxies,
+			s.Config.UpstreamHeaders,
+			s.Config.DownstreamHeaders,
+			s.Config.RemoveUpstream,
+			s.Config.RemoveDownstream,
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
 
+	// Wrap with middleware - convert to http.Handler for middleware chaining
+	var httpHandler http.Handler = handler
+
 	// Wrap with request ID middleware - this should be early in the chain
-	handler = middleware.RequestID(handler)
+	httpHandler = middleware.RequestID(httpHandler)
 
 	// Wrap with whois middleware if enabled
 	whoisEnabled := s.Config.WhoisEnabled != nil && *s.Config.WhoisEnabled
@@ -198,21 +231,25 @@ func (s *Service) CreateHandler() (http.Handler, error) {
 			// Create a whois client adapter for the tsnet server
 			whoisClient := tailscale.NewWhoisClientAdapter(serviceServer)
 			// Use the whois middleware with cache
-			handler = middleware.Whois(whoisClient, whoisEnabled, whoisTimeout, s.whoisCache)(handler)
+			httpHandler = middleware.Whois(whoisClient, whoisEnabled, whoisTimeout, s.whoisCache)(httpHandler)
 		}
 	}
 
 	// Wrap with metrics middleware if collector is available
 	if s.metricsCollector != nil {
-		handler = s.metricsCollector.Middleware(s.Config.Name, handler)
+		httpHandler = s.metricsCollector.Middleware(s.Config.Name, httpHandler)
 	}
 
 	// Wrap with access logging middleware if enabled
 	if s.isAccessLogEnabled() {
-		handler = middleware.AccessLog(slog.Default(), s.Config.Name)(handler)
+		httpHandler = middleware.AccessLog(slog.Default(), s.Config.Name)(httpHandler)
 	}
 
-	return handler, nil
+	// Create a wrapper that preserves the Close method from the original handler
+	return &handlerWithClose{
+		Handler:      httpHandler,
+		closeHandler: handler,
+	}, nil
 }
 
 // isAccessLogEnabled returns whether access logging is enabled for this service
