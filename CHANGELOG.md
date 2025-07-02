@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-07-01
+
+### Added
+
+- Flush interval configuration for proxy handler (#18)
+  - Added `flush_interval` configuration option (e.g., "10ms", "100ms")
+  - Allows control over response buffering behavior
+  - Useful for streaming responses and Server-Sent Events (SSE)
+
+### Changed
+
+- Replaced ReadTimeout with ReadHeaderTimeout for long-lived requests (#17)
+  - Supports WebSocket connections and streaming responses
+  - Prevents timeout issues with long-running connections
+  - ReadHeaderTimeout defaults to 30 seconds
+
+### Fixed
+
+- WebSocket support in metrics and access log middleware (#19)
+  - Fixed panic when WebSocket connections were used
+  - Properly handles WebSocket upgrade requests
+  - Access logs now correctly log WebSocket connections
+- Disabled compression and HTTP/2 in proxy transport (#20)
+  - Prevents issues with certain backend servers
+  - Improves compatibility with various HTTP implementations
+  - Transport now uses HTTP/1.1 only
+
 ## [0.5.0] - 2025-06-30
 
 ### Added
@@ -110,6 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.6.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.1
 [0.4.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.0
