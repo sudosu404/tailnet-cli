@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-07-02
+
+### Fixed
+
+- Handle zero-duration timeouts correctly (#21)
+  - Fixed panic when timeout durations were set to zero
+  - Zero durations now properly disable the respective timeout
+- Add missing flush_interval parsing to Docker labels
+  - Docker label provider now correctly parses flush_interval configuration
+  - Ensures feature parity between file and Docker label configuration
+
+### Changed
+
+- Clean up codebase and remove dead code
+  - Removed unused functions and variables
+  - Improved code organization and maintainability
+
 ## [0.6.0] - 2025-07-01
 
 ### Added
@@ -137,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.6.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.1
 [0.6.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.5.0
 [0.4.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.1
