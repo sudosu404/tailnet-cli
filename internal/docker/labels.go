@@ -210,6 +210,7 @@ func (p *Provider) parseGlobalConfig(container *container.Summary, cfg *config.C
 		TLSHandshakeTimeout:      parser.getDuration("global.tls_handshake_timeout"),
 		ExpectContinueTimeout:    parser.getDuration("global.expect_continue_timeout"),
 		MetricsReadHeaderTimeout: parser.getDuration("global.metrics_read_header_timeout"),
+		FlushInterval:            parser.getDuration("global.flush_interval"),
 	}
 
 	return nil
@@ -274,6 +275,7 @@ func (p *Provider) parseServiceConfig(container container.Summary) (*config.Serv
 	svc.WriteTimeout = parser.getDuration("service.write_timeout")
 	svc.IdleTimeout = parser.getDuration("service.idle_timeout")
 	svc.ResponseHeaderTimeout = parser.getDuration("service.response_header_timeout")
+	svc.FlushInterval = parser.getDuration("service.flush_interval")
 	svc.UpstreamHeaders = parser.getHeaders("service.upstream_headers")
 	svc.DownstreamHeaders = parser.getHeaders("service.downstream_headers")
 	svc.RemoveUpstream = parser.getStringSlice("service.remove_upstream", ",")

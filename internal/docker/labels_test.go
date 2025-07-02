@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -544,5 +545,96 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 				assert.NotNil(t, svc)
 			}
 		})
+	}
+}
+
+// TestConfigParityBetweenTOMLAndDocker ensures that all config fields that can be
+// set via TOML can also be set via Docker labels. This prevents the situation where
+// new config fields are added to TOML parsing but forgotten in Docker label parsing.
+func TestConfigParityBetweenTOMLAndDocker(t *testing.T) {
+	t.Run("Global config fields", func(t *testing.T) {
+		// Get all fields from the Global struct
+		globalType := reflect.TypeOf(config.Global{})
+		dockerParsedFields := getDockerParsedGlobalFields()
+
+		for i := 0; i < globalType.NumField(); i++ {
+			field := globalType.Field(i)
+			mapstructureTag := field.Tag.Get("mapstructure")
+			if mapstructureTag == "" {
+				continue // Skip fields without mapstructure tag
+			}
+
+			// Check if this field is parsed in Docker
+			dockerKey := "global." + mapstructureTag
+			assert.Contains(t, dockerParsedFields, dockerKey,
+				"Field %s (%s) is in config.Global but not parsed in Docker labels",
+				field.Name, mapstructureTag)
+		}
+	})
+
+	t.Run("Service config fields", func(t *testing.T) {
+		// Get all fields from the Service struct
+		serviceType := reflect.TypeOf(config.Service{})
+		dockerParsedFields := getDockerParsedServiceFields()
+
+		for i := 0; i < serviceType.NumField(); i++ {
+			field := serviceType.Field(i)
+			mapstructureTag := field.Tag.Get("mapstructure")
+			if mapstructureTag == "" {
+				continue // Skip fields without mapstructure tag
+			}
+
+			// Check if this field is parsed in Docker
+			dockerKey := "service." + mapstructureTag
+			assert.Contains(t, dockerParsedFields, dockerKey,
+				"Field %s (%s) is in config.Service but not parsed in Docker labels",
+				field.Name, mapstructureTag)
+		}
+	})
+}
+
+// getDockerParsedGlobalFields returns all global.* fields that are parsed in Docker
+// This list must be kept in sync with parseGlobalConfig() in labels.go
+func getDockerParsedGlobalFields() map[string]bool {
+	return map[string]bool{
+		"global.metrics_addr":                true,
+		"global.read_header_timeout":         true,
+		"global.write_timeout":               true,
+		"global.idle_timeout":                true,
+		"global.shutdown_timeout":            true,
+		"global.response_header_timeout":     true,
+		"global.access_log":                  true,
+		"global.trusted_proxies":             true,
+		"global.dial_timeout":                true,
+		"global.keep_alive_timeout":          true,
+		"global.idle_conn_timeout":           true,
+		"global.tls_handshake_timeout":       true,
+		"global.expect_continue_timeout":     true,
+		"global.metrics_read_header_timeout": true,
+		"global.flush_interval":              true,
+	}
+}
+
+// getDockerParsedServiceFields returns all service.* fields that are parsed in Docker
+// This list must be kept in sync with parseServiceConfig() in labels.go
+func getDockerParsedServiceFields() map[string]bool {
+	return map[string]bool{
+		"service.name":                    true,
+		"service.backend_addr":            true,
+		"service.whois_enabled":           true,
+		"service.whois_timeout":           true,
+		"service.tls_mode":                true,
+		"service.read_header_timeout":     true,
+		"service.write_timeout":           true,
+		"service.idle_timeout":            true,
+		"service.response_header_timeout": true,
+		"service.access_log":              true,
+		"service.funnel_enabled":          true,
+		"service.ephemeral":               true,
+		"service.flush_interval":          true,
+		"service.upstream_headers":        true,
+		"service.downstream_headers":      true,
+		"service.remove_upstream":         true,
+		"service.remove_downstream":       true,
 	}
 }

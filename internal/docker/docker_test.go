@@ -90,6 +90,7 @@ func TestParseServiceConfig(t *testing.T) {
 					"tsbridge.service.ephemeral":                 "true",
 					"tsbridge.service.upstream_headers.X-Custom": "value",
 					"tsbridge.service.remove_upstream":           "X-Forwarded-For,X-Real-IP",
+					"tsbridge.service.flush_interval":            "-1ms",
 				},
 			},
 			validate: func(t *testing.T, svc *config.Service) {
@@ -103,6 +104,7 @@ func TestParseServiceConfig(t *testing.T) {
 				assert.True(t, svc.Ephemeral)
 				assert.Equal(t, "value", svc.UpstreamHeaders["X-Custom"])
 				assert.Equal(t, []string{"X-Forwarded-For", "X-Real-IP"}, svc.RemoveUpstream)
+				assert.Equal(t, -1*time.Millisecond, svc.FlushInterval.Duration)
 			},
 		},
 		{
@@ -171,6 +173,7 @@ func TestParseGlobalConfig(t *testing.T) {
 				"tsbridge.global.idle_timeout":               "120s",
 				"tsbridge.global.access_log":                 "true",
 				"tsbridge.global.trusted_proxies":            "10.0.0.0/8,172.16.0.0/12",
+				"tsbridge.global.flush_interval":             "10s",
 			},
 		}
 
@@ -193,6 +196,7 @@ func TestParseGlobalConfig(t *testing.T) {
 		assert.Equal(t, 120*time.Second, cfg.Global.IdleTimeout.Duration)
 		assert.True(t, *cfg.Global.AccessLog)
 		assert.Equal(t, []string{"10.0.0.0/8", "172.16.0.0/12"}, cfg.Global.TrustedProxies)
+		assert.Equal(t, 10*time.Second, cfg.Global.FlushInterval.Duration)
 	})
 
 	t.Run("with fallback to standard env vars", func(t *testing.T) {
