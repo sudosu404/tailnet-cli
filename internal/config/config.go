@@ -21,62 +21,62 @@ import (
 
 // Config represents the complete tsbridge configuration
 type Config struct {
-	Tailscale Tailscale `mapstructure:"tailscale"`
-	Global    Global    `mapstructure:"global"`
-	Services  []Service `mapstructure:"services"`
+	Tailscale Tailscale `mapstructure:"tailscale"` // Tailscale authentication config
+	Global    Global    `mapstructure:"global"`    // Default settings for all services
+	Services  []Service `mapstructure:"services"`  // List of services to expose
 }
 
 // Tailscale contains Tailscale-specific configuration
 type Tailscale struct {
-	OAuthClientID         string   `mapstructure:"oauth_client_id"`
-	OAuthClientIDEnv      string   `mapstructure:"oauth_client_id_env"`
-	OAuthClientIDFile     string   `mapstructure:"oauth_client_id_file"`
-	OAuthClientSecret     string   `mapstructure:"oauth_client_secret"`
-	OAuthClientSecretEnv  string   `mapstructure:"oauth_client_secret_env"`
-	OAuthClientSecretFile string   `mapstructure:"oauth_client_secret_file"`
-	AuthKey               string   `mapstructure:"auth_key"`
-	AuthKeyEnv            string   `mapstructure:"auth_key_env"`
-	AuthKeyFile           string   `mapstructure:"auth_key_file"`
-	OAuthTags             []string `mapstructure:"oauth_tags"`
-	StateDir              string   `mapstructure:"state_dir"`
+	OAuthClientID         string   `mapstructure:"oauth_client_id"`          // OAuth client ID for Tailscale
+	OAuthClientIDEnv      string   `mapstructure:"oauth_client_id_env"`      // Env var containing OAuth client ID
+	OAuthClientIDFile     string   `mapstructure:"oauth_client_id_file"`     // File containing OAuth client ID
+	OAuthClientSecret     string   `mapstructure:"oauth_client_secret"`      // OAuth client secret for Tailscale
+	OAuthClientSecretEnv  string   `mapstructure:"oauth_client_secret_env"`  // Env var containing OAuth client secret
+	OAuthClientSecretFile string   `mapstructure:"oauth_client_secret_file"` // File containing OAuth client secret
+	AuthKey               string   `mapstructure:"auth_key"`                 // Tailscale auth key (alternative to OAuth)
+	AuthKeyEnv            string   `mapstructure:"auth_key_env"`             // Env var containing auth key
+	AuthKeyFile           string   `mapstructure:"auth_key_file"`            // File containing auth key
+	OAuthTags             []string `mapstructure:"oauth_tags"`               // Tags to apply with OAuth
+	StateDir              string   `mapstructure:"state_dir"`                // Directory for Tailscale state
 }
 
 // Global contains global default settings
 type Global struct {
-	ReadHeaderTimeout     Duration `mapstructure:"read_header_timeout"`
-	WriteTimeout          Duration `mapstructure:"write_timeout"`
-	IdleTimeout           Duration `mapstructure:"idle_timeout"`
-	ShutdownTimeout       Duration `mapstructure:"shutdown_timeout"`
-	ResponseHeaderTimeout Duration `mapstructure:"response_header_timeout"`
-	MetricsAddr           string   `mapstructure:"metrics_addr"`
-	AccessLog             *bool    `mapstructure:"access_log"`      // Enable access logging (default: true)
-	TrustedProxies        []string `mapstructure:"trusted_proxies"` // List of trusted proxy IPs or CIDR ranges
-	FlushInterval         Duration `mapstructure:"flush_interval"`  // Time between flushes (-1ms for immediate)
+	ReadHeaderTimeout     Duration `mapstructure:"read_header_timeout"`     // Time allowed to read request headers
+	WriteTimeout          Duration `mapstructure:"write_timeout"`           // Max duration for writing response
+	IdleTimeout           Duration `mapstructure:"idle_timeout"`            // Max time to wait for next request
+	ShutdownTimeout       Duration `mapstructure:"shutdown_timeout"`        // Max duration for graceful shutdown
+	ResponseHeaderTimeout Duration `mapstructure:"response_header_timeout"` // Timeout for backend response headers
+	MetricsAddr           string   `mapstructure:"metrics_addr"`            // Address for Prometheus metrics
+	AccessLog             *bool    `mapstructure:"access_log"`              // Enable access logging (default: true)
+	TrustedProxies        []string `mapstructure:"trusted_proxies"`         // List of trusted proxy IPs or CIDR ranges
+	FlushInterval         Duration `mapstructure:"flush_interval"`          // Time between flushes (-1ms for immediate)
 	// Transport timeouts
-	DialTimeout              Duration `mapstructure:"dial_timeout"`
-	KeepAliveTimeout         Duration `mapstructure:"keep_alive_timeout"`
-	IdleConnTimeout          Duration `mapstructure:"idle_conn_timeout"`
-	TLSHandshakeTimeout      Duration `mapstructure:"tls_handshake_timeout"`
-	ExpectContinueTimeout    Duration `mapstructure:"expect_continue_timeout"`
-	MetricsReadHeaderTimeout Duration `mapstructure:"metrics_read_header_timeout"`
+	DialTimeout              Duration `mapstructure:"dial_timeout"`                // Max time for connection dial
+	KeepAliveTimeout         Duration `mapstructure:"keep_alive_timeout"`          // Keep-alive probe interval
+	IdleConnTimeout          Duration `mapstructure:"idle_conn_timeout"`           // Max idle connection duration
+	TLSHandshakeTimeout      Duration `mapstructure:"tls_handshake_timeout"`       // Max time for TLS handshake
+	ExpectContinueTimeout    Duration `mapstructure:"expect_continue_timeout"`     // Timeout for 100-continue response
+	MetricsReadHeaderTimeout Duration `mapstructure:"metrics_read_header_timeout"` // Read header timeout for metrics server
 }
 
 // Service represents a single service configuration
 type Service struct {
-	Name         string   `mapstructure:"name"`
-	BackendAddr  string   `mapstructure:"backend_addr"`
-	WhoisEnabled *bool    `mapstructure:"whois_enabled"`
-	WhoisTimeout Duration `mapstructure:"whois_timeout"`
-	TLSMode      string   `mapstructure:"tls_mode"` // "auto" (default), "off"
+	Name         string   `mapstructure:"name"`          // Service name (Tailscale hostname)
+	BackendAddr  string   `mapstructure:"backend_addr"`  // Backend server address
+	WhoisEnabled *bool    `mapstructure:"whois_enabled"` // Enable whois lookups (default: true)
+	WhoisTimeout Duration `mapstructure:"whois_timeout"` // Max time for whois lookup
+	TLSMode      string   `mapstructure:"tls_mode"`      // "auto" (default), "off"
 	// Optional overrides
-	ReadHeaderTimeout     Duration `mapstructure:"read_header_timeout"`
-	WriteTimeout          Duration `mapstructure:"write_timeout"`
-	IdleTimeout           Duration `mapstructure:"idle_timeout"`
-	ResponseHeaderTimeout Duration `mapstructure:"response_header_timeout"`
-	AccessLog             *bool    `mapstructure:"access_log"`     // Override global access_log setting
-	FunnelEnabled         *bool    `mapstructure:"funnel_enabled"` // Expose service via Tailscale Funnel
-	Ephemeral             bool     `mapstructure:"ephemeral"`      // Create ephemeral nodes
-	FlushInterval         Duration `mapstructure:"flush_interval"` // Time between flushes (-1ms for immediate)
+	ReadHeaderTimeout     Duration `mapstructure:"read_header_timeout"`     // Override global read header timeout
+	WriteTimeout          Duration `mapstructure:"write_timeout"`           // Override global write timeout
+	IdleTimeout           Duration `mapstructure:"idle_timeout"`            // Override global idle timeout
+	ResponseHeaderTimeout Duration `mapstructure:"response_header_timeout"` // Override global response header timeout
+	AccessLog             *bool    `mapstructure:"access_log"`              // Override global access_log setting
+	FunnelEnabled         *bool    `mapstructure:"funnel_enabled"`          // Expose service via Tailscale Funnel
+	Ephemeral             bool     `mapstructure:"ephemeral"`               // Create ephemeral nodes
+	FlushInterval         Duration `mapstructure:"flush_interval"`          // Time between flushes (-1ms for immediate)
 	// Header manipulation
 	UpstreamHeaders   map[string]string `mapstructure:"upstream_headers"`   // Headers to add to upstream requests
 	DownstreamHeaders map[string]string `mapstructure:"downstream_headers"` // Headers to add to downstream responses
@@ -86,8 +86,8 @@ type Service struct {
 
 // Duration wraps time.Duration for TOML unmarshaling
 type Duration struct {
-	time.Duration
-	IsSet bool `mapstructure:"-" toml:"-" json:"-"` // Track if explicitly set
+	time.Duration      // Embedded time.Duration value
+	IsSet         bool `mapstructure:"-" toml:"-" json:"-"` // Track if explicitly set
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler for Duration
