@@ -180,17 +180,29 @@ tsbridge resolves backend addresses in the following order:
 2. **Port-based**: If `tsbridge.service.port` is set, the address is `<container_name>:<port>`
 3. **Auto-detection**: First exposed port from the container is used with the container name
 
+### Port vs Backend Address in Docker
+
+When running in Docker, use `tsbridge.service.port` instead of `tsbridge.service.backend_addr`:
+
+- **Docker Networking**: Each container has its own IP address. Container names resolve to their IPs automatically.
+- **Why port works**: `tsbridge.service.port=8080` becomes `<container_name>:8080`, which Docker's DNS resolves correctly.
+- **Why localhost fails**: `localhost` or `127.0.0.1` refers to the tsbridge container itself, not your service container.
+
 ### Examples
 
 ```yaml
-# Explicit TCP address
+# RECOMMENDED: Port only (container name will be used)
+- "tsbridge.service.port=3000"
+
+# Also works: Explicit container name with port
+- "tsbridge.service.backend_addr=myservice:3000"
+
+# AVOID: localhost won't reach other containers
 - "tsbridge.service.backend_addr=localhost:8080"
 
-# Unix socket
+# Unix socket (requires volume mount)
 - "tsbridge.service.backend_addr=unix:///var/run/app.sock"
 
-# Port only (container name will be used)
-- "tsbridge.service.port=3000"
 # Auto-detection (uses first exposed port)
 # No backend labels needed if container exposes a port
 ```

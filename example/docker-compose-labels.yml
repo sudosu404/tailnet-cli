@@ -2,7 +2,7 @@ services:
   # tsbridge proxy with Docker label configuration
   tsbridge:
     image: ghcr.io/jtdowney/tsbridge:latest
-    command: 
+    command:
       - "--provider"
       - "docker"
       - "--verbose"
@@ -17,7 +17,7 @@ services:
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
       - "tsbridge.tailscale.oauth_tags=tag:server,tag:proxy"
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      
+
       # Global configuration
       - "tsbridge.global.metrics_addr=:9090"
       - "tsbridge.global.read_header_timeout=30s"
@@ -30,7 +30,7 @@ services:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     ports:
-      - "9090:9090"  # Metrics port
+      - "9090:9090" # Metrics port
 
   # Backend API service with tsbridge labels
   api-backend:
@@ -69,7 +69,7 @@ services:
       # Enable tsbridge for this container
       - "tsbridge.enabled=true"
       - "tsbridge.service.name=web"
-      - "tsbridge.service.backend_addr=web-backend:8081"
+      - "tsbridge.service.port=8081"
       - "tsbridge.service.whois_enabled=true"
       # Custom timeouts for this service
       - "tsbridge.service.read_header_timeout=60s"
