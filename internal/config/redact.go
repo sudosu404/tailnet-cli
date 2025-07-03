@@ -34,8 +34,8 @@ type RedactedTailscale struct {
 	AuthKey               string   `json:"auth_key,omitempty"`
 	AuthKeyEnv            string   `json:"auth_key_env,omitempty"`
 	AuthKeyFile           string   `json:"auth_key_file,omitempty"`
-	OAuthTags             []string `json:"oauth_tags,omitempty"`
 	StateDir              string   `json:"state_dir,omitempty"`
+	DefaultTags           []string `json:"default_tags,omitempty"`
 }
 
 // RedactedConfig is a version of Config with sensitive fields redacted for safe logging
@@ -60,8 +60,8 @@ func (c *Config) Redacted() *RedactedConfig {
 			OAuthClientSecretFile: c.Tailscale.OAuthClientSecretFile,
 			AuthKeyEnv:            c.Tailscale.AuthKeyEnv,
 			AuthKeyFile:           c.Tailscale.AuthKeyFile,
-			OAuthTags:             c.Tailscale.OAuthTags,
 			StateDir:              c.Tailscale.StateDir,
+			DefaultTags:           c.Tailscale.DefaultTags,
 		},
 		Global:   c.Global,
 		Services: make([]Service, len(c.Services)),
