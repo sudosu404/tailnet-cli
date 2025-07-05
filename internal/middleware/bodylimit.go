@@ -2,6 +2,9 @@
 package middleware
 
 import (
+	"bufio"
+	"errors"
+	"net"
 	"net/http"
 )
 
@@ -67,4 +70,13 @@ func (w *maxBytesResponseWriter) Error(msg string, code int) {
 	}
 	// For other errors, use default behavior
 	http.Error(w, msg, code)
+}
+
+// Hijack implements the http.Hijacker interface
+func (w *maxBytesResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := w.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("ResponseWriter does not support hijacking")
+	}
+	return hijacker.Hijack()
 }

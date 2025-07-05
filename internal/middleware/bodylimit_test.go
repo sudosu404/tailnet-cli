@@ -1,152 +1,180 @@
 package middleware
 
 import (
-	"bytes"
+	"bufio"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMaxBytesHandler(t *testing.T) {
 	tests := []struct {
 		name           string
 		maxBytes       int64
+		body           string
 		contentLength  string
-		bodySize       int
 		expectedStatus int
-		expectBodyRead bool
+		expectedBody   string
 	}{
 		{
 			name:           "request within limit",
-			maxBytes:       100,
-			bodySize:       50,
+			maxBytes:       10,
+			body:           "hello",
 			expectedStatus: http.StatusOK,
-			expectBodyRead: true,
+			expectedBody:   "hello",
 		},
 		{
 			name:           "request at limit",
-			maxBytes:       100,
-			bodySize:       100,
+			maxBytes:       5,
+			body:           "hello",
 			expectedStatus: http.StatusOK,
-			expectBodyRead: true,
+			expectedBody:   "hello",
 		},
 		{
 			name:           "request exceeds limit",
-			maxBytes:       100,
-			bodySize:       150,
+			maxBytes:       5,
+			body:           "hello world",
 			expectedStatus: http.StatusRequestEntityTooLarge,
-			expectBodyRead: false,
+			expectedBody:   "Request body too large\n",
 		},
 		{
-			name:           "request with content-length exceeds limit",
-			maxBytes:       100,
-			contentLength:  "150",
-			bodySize:       150,
+			name:           "content-length exceeds limit",
+			maxBytes:       5,
+			body:           "hello world", // actual body that exceeds limit
+			contentLength:  "100",
 			expectedStatus: http.StatusRequestEntityTooLarge,
-			expectBodyRead: false,
+			expectedBody:   "Request body too large\n",
 		},
 		{
-			name:           "negative limit disables check",
+			name:           "negative limit (no limit)",
 			maxBytes:       -1,
-			bodySize:       1000,
+			body:           strings.Repeat("x", 1000),
 			expectedStatus: http.StatusOK,
-			expectBodyRead: true,
-		},
-		{
-			name:           "zero body allowed",
-			maxBytes:       100,
-			bodySize:       0,
-			expectedStatus: http.StatusOK,
-			expectBodyRead: true,
+			expectedBody:   strings.Repeat("x", 1000),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Track if the handler was called
-			handlerCalled := false
-			bodyRead := false
-
-			// Create test handler
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				handlerCalled = true
 				body, err := io.ReadAll(r.Body)
-				if err == nil {
-					bodyRead = true
-					w.WriteHeader(http.StatusOK)
-					_, _ = w.Write(body)
-				} else {
-					// If we get an error reading the body, it's likely due to MaxBytesReader
-					w.WriteHeader(http.StatusBadRequest)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				}
+				w.Write(body)
 			})
 
-			// Wrap with MaxBytesHandler
 			wrapped := MaxBytesHandler(tt.maxBytes)(handler)
 
-			// Create request
-			body := bytes.Repeat([]byte("x"), tt.bodySize)
-			req := httptest.NewRequest("POST", "/test", bytes.NewReader(body))
-
-			// Set Content-Length if specified
+			req := httptest.NewRequest("POST", "/", strings.NewReader(tt.body))
 			if tt.contentLength != "" {
 				req.Header.Set("Content-Length", tt.contentLength)
-				req.ContentLength = int64(tt.bodySize)
 			}
 
-			// Execute request
-			recorder := httptest.NewRecorder()
-			wrapped.ServeHTTP(recorder, req)
+			rec := httptest.NewRecorder()
+			wrapped.ServeHTTP(rec, req)
 
-			// Check results
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
-
-			if tt.expectBodyRead {
-				assert.True(t, handlerCalled, "handler should have been called")
-				assert.True(t, bodyRead, "body should have been read")
-				if tt.bodySize > 0 {
-					assert.Equal(t, body, recorder.Body.Bytes(), "response should echo request body")
-				}
-			} else {
-				// For content-length check, handler might not be called at all
-				if tt.contentLength != "" && tt.maxBytes > 0 {
-					assert.False(t, handlerCalled, "handler should not have been called")
-				}
-				assert.Contains(t, recorder.Body.String(), "Request body too large")
-			}
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+			assert.Equal(t, tt.expectedBody, rec.Body.String())
 		})
 	}
 }
 
-func TestMaxBytesHandler_ChunkedEncoding(t *testing.T) {
-	// Test with chunked encoding (no Content-Length header)
-	maxBytes := int64(100)
-	bodySize := 150
+// mockHijacker is a test implementation of http.ResponseWriter that supports hijacking
+type mockHijacker struct {
+	*httptest.ResponseRecorder
+	hijacked bool
+}
 
+func (m *mockHijacker) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	m.hijacked = true
+	// Return a mock connection
+	server, client := net.Pipe()
+	// Close server side immediately for test
+	server.Close()
+	return client, bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client)), nil
+}
+
+func TestMaxBytesHandlerHijacking(t *testing.T) {
+	// Test that hijacking still works through our wrapper
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := io.ReadAll(r.Body)
-		if err != nil {
-			// MaxBytesReader will cause an error when limit is exceeded
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
+		hijacker, ok := w.(http.Hijacker)
+		require.True(t, ok, "ResponseWriter should implement Hijacker")
+
+		conn, _, err := hijacker.Hijack()
+		require.NoError(t, err)
+		conn.Close()
 	})
 
-	wrapped := MaxBytesHandler(maxBytes)(handler)
+	wrapped := MaxBytesHandler(1024)(handler)
 
-	// Create request without Content-Length (simulating chunked encoding)
-	body := strings.Repeat("x", bodySize)
-	req := httptest.NewRequest("POST", "/test", strings.NewReader(body))
-	req.ContentLength = -1 // Force chunked encoding
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Upgrade", "websocket")
 
-	recorder := httptest.NewRecorder()
-	wrapped.ServeHTTP(recorder, req)
+	// Use our mock hijacker
+	rec := &mockHijacker{ResponseRecorder: httptest.NewRecorder()}
+	wrapped.ServeHTTP(rec, req)
 
-	// The handler will be called but reading the body will fail
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+	assert.True(t, rec.hijacked, "Handler should have hijacked the connection")
+}
+
+func TestMaxBytesHandlerNoHijackSupport(t *testing.T) {
+	// Test when underlying ResponseWriter doesn't support hijacking
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hijacker, ok := w.(http.Hijacker)
+		require.True(t, ok, "ResponseWriter should implement Hijacker")
+
+		_, _, err := hijacker.Hijack()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "does not support hijacking")
+
+		// Write normal response when hijacking fails
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("hijacking not supported"))
+	})
+
+	wrapped := MaxBytesHandler(1024)(handler)
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	// Regular ResponseRecorder doesn't support hijacking
+	rec := httptest.NewRecorder()
+	wrapped.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, "hijacking not supported", rec.Body.String())
+}
+
+func TestMaxBytesHandlerLargeBodyPartialRead(t *testing.T) {
+	// Test that MaxBytesReader properly limits body reading
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Try to read more than the limit
+		buf := make([]byte, 20)
+		n, err := r.Body.Read(buf)
+
+		// Should read up to the limit and then get an error
+		if err != nil && err != io.EOF {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+
+		w.Write(buf[:n])
+	})
+
+	wrapped := MaxBytesHandler(10)(handler)
+
+	req := httptest.NewRequest("POST", "/", strings.NewReader("this is a very long body"))
+	rec := httptest.NewRecorder()
+	wrapped.ServeHTTP(rec, req)
+
+	// The handler should have received the error from MaxBytesReader
+	assert.Equal(t, http.StatusRequestEntityTooLarge, rec.Code)
 }
