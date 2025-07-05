@@ -1067,7 +1067,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.config.Validate()
+			err := tt.config.Validate("")
 			if tt.wantErr == "" {
 				if err != nil {
 					t.Errorf("Validate() error = %v, wantErr = nil", err)
@@ -1534,7 +1534,7 @@ func TestValidateConfigErrorTypes(t *testing.T) {
 		}
 		cfg.SetDefaults()
 
-		err := cfg.Validate()
+		err := cfg.Validate("")
 		if err == nil {
 			t.Fatal("expected validation error")
 		}
@@ -2296,7 +2296,7 @@ func TestTagsInheritance(t *testing.T) {
 		assert.Equal(t, []string{"tag:global", "tag:default"}, cfg.Services[1].Tags)
 
 		// Validate should pass
-		err := cfg.Validate()
+		err := cfg.Validate("")
 		assert.NoError(t, err)
 	})
 }
@@ -2406,5 +2406,88 @@ backend_addr = "localhost:8080"
 		cfg2.Normalize()
 		assert.Equal(t, time.Duration(0), cfg2.Services[0].WriteTimeout.Duration)
 		assert.True(t, cfg2.Services[0].WriteTimeout.IsSet)
+	})
+}
+
+func TestValidateWithProvider(t *testing.T) {
+	t.Run("no services with docker provider is allowed", func(t *testing.T) {
+		cfg := &Config{
+			Tailscale: Tailscale{
+				OAuthClientID:     "test-id",
+				OAuthClientSecret: "test-secret",
+			},
+			Global: Global{
+				ReadHeaderTimeout: makeDuration(5 * time.Second),
+				WriteTimeout:      makeDuration(10 * time.Second),
+				IdleTimeout:       makeDuration(120 * time.Second),
+				ShutdownTimeout:   makeDuration(15 * time.Second),
+			},
+			Services: []Service{},
+		}
+
+		// Should fail with no provider specified
+		err := cfg.Validate("")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "at least one service must be defined")
+
+		// Should fail with file provider
+		err = cfg.Validate("file")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "at least one service must be defined")
+
+		// Should succeed with docker provider
+		err = cfg.Validate("docker")
+		assert.NoError(t, err)
+	})
+
+	t.Run("no services with non-docker provider fails", func(t *testing.T) {
+		cfg := &Config{
+			Tailscale: Tailscale{
+				OAuthClientID:     "test-id",
+				OAuthClientSecret: "test-secret",
+			},
+			Global: Global{
+				ReadHeaderTimeout: makeDuration(5 * time.Second),
+				WriteTimeout:      makeDuration(10 * time.Second),
+				IdleTimeout:       makeDuration(120 * time.Second),
+				ShutdownTimeout:   makeDuration(15 * time.Second),
+			},
+			Services: []Service{},
+		}
+
+		providers := []string{"", "file", "kubernetes", "consul"}
+		for _, provider := range providers {
+			err := cfg.Validate(provider)
+			assert.Error(t, err, "provider: %s", provider)
+			assert.Contains(t, err.Error(), "at least one service must be defined")
+		}
+	})
+
+	t.Run("services present works for all providers", func(t *testing.T) {
+		cfg := &Config{
+			Tailscale: Tailscale{
+				OAuthClientID:     "test-id",
+				OAuthClientSecret: "test-secret",
+			},
+			Global: Global{
+				ReadHeaderTimeout: makeDuration(5 * time.Second),
+				WriteTimeout:      makeDuration(10 * time.Second),
+				IdleTimeout:       makeDuration(120 * time.Second),
+				ShutdownTimeout:   makeDuration(15 * time.Second),
+			},
+			Services: []Service{
+				{
+					Name:        "test-service",
+					BackendAddr: "localhost:8080",
+					Tags:        []string{"tag:test"},
+				},
+			},
+		}
+
+		providers := []string{"", "file", "docker", "kubernetes", "consul"}
+		for _, provider := range providers {
+			err := cfg.Validate(provider)
+			assert.NoError(t, err, "provider: %s", provider)
+		}
 	})
 }
