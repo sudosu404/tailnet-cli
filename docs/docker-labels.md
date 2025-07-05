@@ -92,6 +92,9 @@ labels:
   # Access logging
   - "tsbridge.global.access_log=true"
 
+  # Request body size limit
+  - "tsbridge.global.max_request_body_size=10MB"
+
   # Trusted proxies (comma-separated)
   - "tsbridge.global.trusted_proxies=10.0.0.0/8,172.16.0.0/12"
 
@@ -146,6 +149,9 @@ labels:
 
   # Access logging (override global)
   - "tsbridge.service.access_log=false"
+
+  # Request body size limit (override global)
+  - "tsbridge.service.max_request_body_size=50MB"
 
   # Tailscale Funnel
   - "tsbridge.service.funnel_enabled=true"
