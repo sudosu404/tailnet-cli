@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-07-05
+
+### Added
+
+- Dynamic service management support for Docker provider (#27)
+  - Services can now be dynamically added/removed based on Docker container lifecycle
+  - Improved resource management and service lifecycle handling
+- Configurable request body size limits (#33)
+  - Added `max_request_body_size` configuration option
+  - Helps prevent resource exhaustion from large request bodies
+  - Configurable per-service or globally
+- Per-service tag support for OAuth authentication (#25)
+  - Services can now have individual tags for better Tailscale ACL control
+  - Tags can be specified per-service or inherited from global defaults
+- Support for both 'enable' and 'enabled' Docker labels (#31)
+  - Improved compatibility with different labeling conventions
+  - More flexible Docker label parsing
+
+### Fixed
+
+- OAuth auth key security posture improvements (#34)
+  - Enhanced validation and handling of OAuth credentials
+  - Better error messages for authentication issues
+- HTTP header injection prevention in whois middleware (#32)
+  - Added proper sanitization to prevent header injection attacks
+  - Improved security of whois information handling
+- Fixed WebSocket support in request body limit middleware
+  - Added http.Hijacker interface support to maxBytesResponseWriter
+  - Ensures WebSocket connections work properly with max_request_body_size configured
+
+### Changed
+
+- **BREAKING:** OAuth tag configuration changes (#25)
+  - Renamed `oauth_tags` in `[tailscale]` section to `default_tags`
+  - OAuth-authenticated services now MUST have at least one tag (either inherited from `default_tags` or explicitly set via `tags` field)
+  - Migration: Update `oauth_tags` to `default_tags` in your configuration files
+- Consolidated metrics server constructor functions (#24)
+  - Cleaner API for metrics server initialization
+  - Reduced code duplication
+
+### Development
+
+- Improved test reliability and fixed goroutine leaks (#26)
+- Added GoReleaser support for PR Docker builds (#28)
+- Enhanced Docker documentation with clearer port vs backend_addr usage
+- Added comprehensive inline documentation to config structs
+
 ## [0.6.1] - 2025-07-02
 
 ### Fixed
@@ -154,6 +201,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.7.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.1
 [0.6.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.0
 [0.5.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.5.0
