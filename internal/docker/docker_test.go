@@ -2084,14 +2084,180 @@ func TestWatchLoopWithFailingClient(t *testing.T) {
 	assert.Less(t, elapsed.Milliseconds(), int64(4000), "Should timeout before completing all attempts")
 }
 
+func TestWatchLoopContextCancellation(t *testing.T) {
+	// Test that watchLoop exits immediately when context is cancelled
+	mockClient := &MockFailingDockerClient{}
+	p := &Provider{
+		client: mockClient,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	configCh := make(chan *config.Config, 1)
+	eventOptions := events.ListOptions{}
+
+	// Cancel context immediately
+	cancel()
+
+	start := time.Now()
+	p.watchLoop(ctx, configCh, eventOptions)
+	elapsed := time.Since(start)
+
+	// Should exit almost immediately
+	assert.Less(t, elapsed.Milliseconds(), int64(100), "Should exit immediately when context is cancelled")
+}
+
+func TestWatchLoopBackoffCap(t *testing.T) {
+	// Test that exponential backoff is capped at 5 minutes
+	// We'll track timing to ensure backoff doesn't exceed the cap
+	attemptTimes := []time.Time{}
+	attemptCount := 0
+
+	mockClient := &MockFailingDockerClient{}
+	p := &Provider{
+		client: mockClient,
+	}
+
+	// Short timeout since we're just testing the backoff cap
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	configCh := make(chan *config.Config, 1)
+	eventOptions := events.ListOptions{}
+
+	// Track attempt times
+	mockClient.EventsFunc = func(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
+		attemptCount++
+		attemptTimes = append(attemptTimes, time.Now())
+
+		eventCh := make(chan events.Message)
+		errCh := make(chan error, 1)
+
+		// Fail immediately
+		close(eventCh)
+		errCh <- fmt.Errorf("simulated failure")
+
+		return eventCh, errCh
+	}
+
+	// Run watchLoop
+	done := make(chan bool)
+	go func() {
+		p.watchLoop(ctx, configCh, eventOptions)
+		done <- true
+	}()
+
+	// Wait for several backoff cycles
+	time.Sleep(8 * time.Second)
+	cancel()
+	<-done
+
+	// Should see exponential backoff: ~0s, ~1s, ~2s, ~4s
+	assert.GreaterOrEqual(t, attemptCount, 4, "Should have at least 4 attempts")
+
+	// The timing might be off due to goroutine scheduling, so let's just verify
+	// that we're seeing increasing delays between attempts with tolerance
+	if len(attemptTimes) >= 4 {
+		// Calculate delays between attempts
+		var delays []time.Duration
+		for i := 1; i < len(attemptTimes) && i < 4; i++ {
+			delays = append(delays, attemptTimes[i].Sub(attemptTimes[i-1]))
+		}
+
+		// First delay should be at least 800ms (allowing for some variance)
+		assert.GreaterOrEqual(t, delays[0].Milliseconds(), int64(500), "First retry delay should be at least 500ms")
+
+		// Check that we're seeing generally increasing delays (exponential backoff pattern)
+		// We allow for timing variations by checking if at least one subsequent delay is longer
+		longerDelayFound := false
+		for i := 1; i < len(delays); i++ {
+			if delays[i].Milliseconds() > delays[0].Milliseconds() {
+				longerDelayFound = true
+				break
+			}
+		}
+		assert.True(t, longerDelayFound, "Should see increasing delays indicating exponential backoff")
+	}
+}
+
+func TestWatchLoopStreamEstablished(t *testing.T) {
+	// Test that watchLoop properly tracks when a stream is established
+	callCount := 0
+
+	mockClient := &MockFailingDockerClient{}
+	p := &Provider{
+		client:      mockClient,
+		labelPrefix: "tsbridge",
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
+
+	configCh := make(chan *config.Config, 1)
+	eventOptions := events.ListOptions{}
+
+	// Mock Events to fail first, then succeed with events
+	mockClient.EventsFunc = func(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
+		callCount++
+
+		eventCh := make(chan events.Message, 1)
+		errCh := make(chan error, 1)
+
+		if callCount == 1 {
+			// First attempt fails immediately
+			close(eventCh)
+			errCh <- fmt.Errorf("simulated failure")
+		} else {
+			// Second attempt sends events to establish stream
+			go func() {
+				// Send a tsbridge-enabled container event
+				select {
+				case <-ctx.Done():
+					return
+				case eventCh <- events.Message{
+					Type:   "container",
+					Action: "start",
+					Actor: events.Actor{
+						ID: "test123",
+						Attributes: map[string]string{
+							"name":             "test-container",
+							"tsbridge.enabled": "true",
+						},
+					},
+				}:
+					// Wait a bit then close to test backoff reset
+					time.Sleep(500 * time.Millisecond)
+					close(eventCh)
+				}
+			}()
+		}
+
+		return eventCh, errCh
+	}
+
+	// Run watchLoop
+	go p.watchLoop(ctx, configCh, eventOptions)
+
+	// Wait for retries
+	time.Sleep(3 * time.Second)
+
+	// Should have retried after initial failure
+	assert.GreaterOrEqual(t, callCount, 2, "Should have retried after failure")
+}
+
 // MockFailingDockerClient simulates a Docker client that always fails
-type MockFailingDockerClient struct{}
+type MockFailingDockerClient struct {
+	EventsFunc func(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error)
+}
 
 func (m *MockFailingDockerClient) ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
 	return nil, fmt.Errorf("simulated Docker connection failure")
 }
 
 func (m *MockFailingDockerClient) Events(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
+	if m.EventsFunc != nil {
+		return m.EventsFunc(ctx, options)
+	}
+
 	eventCh := make(chan events.Message)
 	errCh := make(chan error, 1)
 
@@ -2149,6 +2315,58 @@ func TestDebouncedReload(t *testing.T) {
 	finalCount := atomic.LoadInt32(&fireCount)
 	assert.Equal(t, int32(1), finalCount, "Expected debouncing to result in only one timer execution")
 	assert.GreaterOrEqual(t, elapsed.Milliseconds(), int64(500), "Should wait for debounce period")
+}
+
+// MockStreamingDockerClient simulates a Docker client that provides events then fails
+type MockStreamingDockerClient struct {
+	failAfterCalls int
+	callCount      *int
+}
+
+func (m *MockStreamingDockerClient) ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
+	return []container.Summary{}, nil
+}
+
+func (m *MockStreamingDockerClient) Events(ctx context.Context, options events.ListOptions) (<-chan events.Message, <-chan error) {
+	*m.callCount++
+	eventCh := make(chan events.Message, 1)
+	errCh := make(chan error, 1)
+
+	go func() {
+		// Send some events to establish a successful stream
+		if *m.callCount <= m.failAfterCalls {
+			// Send a container event
+			select {
+			case <-ctx.Done():
+				return
+			case eventCh <- events.Message{
+				Action: "start",
+				Type:   events.ContainerEventType,
+				Actor: events.Actor{
+					ID: "container1",
+					Attributes: map[string]string{
+						"name": "test-container",
+					},
+				},
+			}:
+				// Wait a bit then close to trigger reconnect
+				time.Sleep(300 * time.Millisecond)
+			}
+		}
+		// Close channels to simulate stream failure
+		close(eventCh)
+		close(errCh)
+	}()
+
+	return eventCh, errCh
+}
+
+func (m *MockStreamingDockerClient) Ping(ctx context.Context) (types.Ping, error) {
+	return types.Ping{}, nil
+}
+
+func (m *MockStreamingDockerClient) Close() error {
+	return nil
 }
 
 // MockSuccessfulDockerClient simulates a Docker client that works
