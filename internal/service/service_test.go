@@ -2386,8 +2386,8 @@ func TestRegistry_RemoveService_EdgeCases(t *testing.T) {
 	t.Run("remove service with active connections", func(t *testing.T) {
 		// Create a backend that keeps connections open
 		var wg sync.WaitGroup
+		wg.Add(1) // Pre-increment the wait group
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			wg.Add(1)
 			defer wg.Done()
 			// Keep connection open for a while
 			time.Sleep(100 * time.Millisecond)
