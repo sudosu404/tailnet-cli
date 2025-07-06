@@ -364,3 +364,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - Built with [Tailscale](https://tailscale.com)'s excellent [tsnet](https://pkg.go.dev/tailscale.com/tsnet) library
 - Inspired by [tsnsrv](https://github.com/boinkor-net/tsnsrv) - a similar tool for exposing services on a Tailnet
+
+## See Also
+
+- [tsdproxy](https://github.com/almeidapaulopt/tsdproxy) - Another tool for exposing Docker containers to your Tailnet
