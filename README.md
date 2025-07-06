@@ -1,5 +1,10 @@
 # tsbridge
 
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jtdowney/tsbridge)](https://github.com/jtdowney/tsbridge/releases)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jtdowney/tsbridge/ci.yml?branch=main)](https://github.com/jtdowney/tsbridge/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jtdowney/tsbridge)](https://goreportcard.com/report/github.com/jtdowney/tsbridge)
+[![License](https://img.shields.io/github/license/jtdowney/tsbridge)](https://github.com/jtdowney/tsbridge/blob/main/LICENSE)
+
 A lightweight proxy manager built on Tailscale's tsnet library that enables multiple HTTPS services on a Tailnet via a single TOML configuration file.
 
 > **Security Note**: tsbridge is designed for use in relatively trusted environments like home labs and development networks. It is not intended for security-critical production deployments. See [THREAT_MODEL.md](THREAT_MODEL.md) for details.
