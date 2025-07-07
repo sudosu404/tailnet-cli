@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-07-07
+
+### Fixed
+
+- Fixed handling of zero value for max_request_body_size configuration (#35)
+  - Explicitly set zero values are now properly respected
+  - Zero value disables request body size limits as intended
+
+### Dependencies
+
+- Bumped github.com/docker/docker to latest version (#39)
+
+### Development
+
+- Added auto-cleanup for architecture-specific Docker tags (#38)
+  - Reduces registry clutter during releases
+  - Improves build pipeline efficiency
+- Added minor version tags to Docker releases (#40)
+  - Docker images now tagged with both full version (e.g., v0.7.1) and minor version (e.g., v0.7)
+  - Allows users to track minor version updates automatically
+
 ## [0.7.0] - 2025-07-05
 
 ### Added
@@ -142,7 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING:** Removed retry configuration (`retry_count`, `retry_delay`, `retry_strategy`, `max_retry_attempts`) 
+- **BREAKING:** Removed retry configuration (`retry_count`, `retry_delay`, `retry_strategy`, `max_retry_attempts`)
 - Simplified architecture to use lazy connections instead of startup validation
 - Services now always start successfully and handle backend connection failures at request time by returning appropriate HTTP error codes (502/504)
 - Replaced Docker polling with event-based monitoring for better performance and resource usage
@@ -201,6 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.7.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.1
 [0.6.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.0
