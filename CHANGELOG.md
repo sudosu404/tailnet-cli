@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-07-07
+
+### Added
+
+- FreeBSD deployment support (#41)
+  - Added FreeBSD to GoReleaser configuration
+  - Expanded platform support for broader deployment options
+- Config validation command (#42)
+  - Added `validate` subcommand to verify configuration files without starting services
+  - Useful for CI/CD pipelines and pre-deployment checks
+  - Validates TOML syntax and configuration semantics
+
 ## [0.7.1] - 2025-07-07
 
 ### Fixed
@@ -222,6 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.8.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.8.0
 [0.7.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.0
 [0.6.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.1
