@@ -53,3 +53,10 @@ release:
 .PHONY: release-snapshot
 release-snapshot:
 	goreleaser release --snapshot --clean
+
+.PHONY: docker-push-sha
+docker-push-sha:
+	@echo "Building and pushing Docker images with SHA: sha-$(shell git rev-parse --short HEAD)"
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t ghcr.io/jtdowney/tsbridge:sha-$(shell git rev-parse --short HEAD) \
+		--push .
