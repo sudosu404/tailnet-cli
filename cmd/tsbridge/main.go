@@ -78,24 +78,44 @@ func parseCLIArgs(args []string) (*cliArgs, error) {
 	return result, nil
 }
 
-// setupCommon configures logging and validates provider-specific flags
-func setupCommon(args *cliArgs) error {
-	// Configure logging
+// setupLogging configures the global logger based on the verbose flag
+func setupLogging(verbose bool) {
 	opts := &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}
-	if args.verbose {
+	if verbose {
 		opts.Level = slog.LevelDebug
 	}
 	handler := slog.NewTextHandler(os.Stdout, opts)
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
+}
+
+// setupCommon configures logging and validates provider-specific flags
+func setupCommon(args *cliArgs) error {
+	// Configure logging
+	setupLogging(args.verbose)
 
 	// Validate provider-specific flags
 	if args.provider == "file" && args.configPath == "" {
 		return fmt.Errorf("-config flag is required for file provider")
 	}
 	return nil
+}
+
+// createProvider creates a configuration provider based on the CLI arguments
+func createProvider(args *cliArgs) (config.Provider, error) {
+	dockerOpts := config.DockerProviderOptions{
+		DockerEndpoint: args.dockerEndpoint,
+		LabelPrefix:    args.labelPrefix,
+	}
+
+	provider, err := config.NewProvider(args.provider, args.configPath, dockerOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create configuration provider: %w", err)
+	}
+
+	return provider, nil
 }
 
 // validateConfig validates the configuration and returns an error if invalid
@@ -111,14 +131,9 @@ func validateConfig(args *cliArgs) error {
 	slog.Debug("validating configuration", "provider", args.provider)
 
 	// Create configuration provider
-	dockerOpts := config.DockerProviderOptions{
-		DockerEndpoint: args.dockerEndpoint,
-		LabelPrefix:    args.labelPrefix,
-	}
-
-	configProvider, err := config.NewProvider(args.provider, args.configPath, dockerOpts)
+	configProvider, err := createProvider(args)
 	if err != nil {
-		return fmt.Errorf("failed to create configuration provider: %w", err)
+		return err
 	}
 
 	slog.Debug("loading configuration for validation", "provider", configProvider.Name())
@@ -166,14 +181,9 @@ func run(args *cliArgs) error {
 	slog.Debug("starting tsbridge", "version", version, "provider", args.provider)
 
 	// Create configuration provider
-	dockerOpts := config.DockerProviderOptions{
-		DockerEndpoint: args.dockerEndpoint,
-		LabelPrefix:    args.labelPrefix,
-	}
-
-	configProvider, err := config.NewProvider(args.provider, args.configPath, dockerOpts)
+	configProvider, err := createProvider(args)
 	if err != nil {
-		return fmt.Errorf("failed to create configuration provider: %w", err)
+		return err
 	}
 
 	slog.Debug("loading configuration", "provider", configProvider.Name())

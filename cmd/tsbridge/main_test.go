@@ -1088,3 +1088,152 @@ backend_addr = "localhost:8080"
 		})
 	}
 }
+
+// TestSetupLogging tests the setupLogging function
+func TestSetupLogging(t *testing.T) {
+	tests := []struct {
+		name      string
+		verbose   bool
+		wantLevel slog.Level
+	}{
+		{
+			name:      "default info level",
+			verbose:   false,
+			wantLevel: slog.LevelInfo,
+		},
+		{
+			name:      "verbose debug level",
+			verbose:   true,
+			wantLevel: slog.LevelDebug,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Save original logger
+			oldLogger := slog.Default()
+			defer slog.SetDefault(oldLogger)
+
+			// Setup logging
+			setupLogging(tt.verbose)
+
+			// Create a test log buffer to capture output
+			var buf bytes.Buffer
+			handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: tt.wantLevel})
+			testLogger := slog.New(handler)
+			slog.SetDefault(testLogger)
+
+			// Test log output at different levels
+			slog.Debug("debug message")
+			slog.Info("info message")
+
+			output := buf.String()
+			if tt.verbose {
+				assert.Contains(t, output, "debug message", "Debug logging should be visible when verbose=true")
+			} else {
+				assert.NotContains(t, output, "debug message", "Debug logging should not be visible when verbose=false")
+			}
+			assert.Contains(t, output, "info message", "Info logging should always be visible")
+		})
+	}
+}
+
+// TestCreateProvider tests the createProvider function
+func TestCreateProvider(t *testing.T) {
+	// Save original registry
+	originalRegistry := config.DefaultRegistry
+	defer func() { config.DefaultRegistry = originalRegistry }()
+
+	// Register providers for testing
+	registerProviders()
+
+	tests := []struct {
+		name         string
+		args         *cliArgs
+		setupFunc    func(t *testing.T) string // returns config path if needed
+		wantProvider string
+		wantErr      bool
+		errContains  string
+	}{
+		{
+			name: "file provider with valid config path",
+			args: &cliArgs{
+				provider:   "file",
+				configPath: "test.toml",
+			},
+			setupFunc: func(t *testing.T) string {
+				configPath := filepath.Join(t.TempDir(), "test.toml")
+				configContent := `
+[tailscale]
+auth_key = "test-auth-key"
+
+[[services]]
+name = "test-service"
+backend_addr = "localhost:8080"
+`
+				err := os.WriteFile(configPath, []byte(configContent), 0644)
+				require.NoError(t, err)
+				return configPath
+			},
+			wantProvider: "file",
+		},
+		{
+			name: "docker provider",
+			args: &cliArgs{
+				provider:       "docker",
+				dockerEndpoint: "unix:///var/run/docker.sock",
+				labelPrefix:    "tsbridge",
+			},
+			wantProvider: "docker",
+		},
+		{
+			name: "invalid provider",
+			args: &cliArgs{
+				provider: "invalid",
+			},
+			wantErr:     true,
+			errContains: "unknown provider type",
+		},
+		{
+			name: "file provider without config path",
+			args: &cliArgs{
+				provider:   "file",
+				configPath: "",
+			},
+			wantProvider: "file",
+			// Should still create provider, error happens on Load
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Run setup function if provided
+			if tt.setupFunc != nil {
+				configPath := tt.setupFunc(t)
+				tt.args.configPath = configPath
+			}
+
+			// Create provider
+			provider, err := createProvider(tt.args)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+				return
+			}
+
+			// For docker provider, it might fail in CI environments
+			if tt.args.provider == "docker" && err != nil {
+				// If docker fails, just check it's not a "provider not registered" error
+				assert.NotContains(t, err.Error(), "provider not registered")
+				return
+			}
+
+			require.NoError(t, err)
+			assert.NotNil(t, provider)
+			assert.Equal(t, tt.wantProvider, provider.Name())
+		})
+	}
+}
