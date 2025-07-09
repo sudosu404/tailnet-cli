@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/jtdowney/tsbridge/internal/app"
@@ -20,6 +21,9 @@ var version = "dev"
 
 // exitFunc allows tests to override os.Exit
 var exitFunc = os.Exit
+
+// loggingOnce ensures setupLogging is only called once
+var loggingOnce = &sync.Once{}
 
 // registerProviders explicitly registers all available providers
 var registerProviders = func() {
@@ -58,6 +62,7 @@ func parseCLIArgs(args []string) (*cliArgs, error) {
 	fs.StringVar(&result.labelPrefix, "docker-label-prefix", "tsbridge", "Docker label prefix for configuration")
 	fs.BoolVar(&result.verbose, "verbose", false, "Enable debug logging")
 	fs.BoolVar(&result.help, "help", false, "Show usage information")
+	fs.BoolVar(&result.help, "h", false, "Show usage information")
 	fs.BoolVar(&result.version, "version", false, "Show version information")
 	fs.BoolVar(&result.validate, "validate", false, "Validate configuration and exit")
 
@@ -80,15 +85,17 @@ func parseCLIArgs(args []string) (*cliArgs, error) {
 
 // setupLogging configures the global logger based on the verbose flag
 func setupLogging(verbose bool) {
-	opts := &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}
-	if verbose {
-		opts.Level = slog.LevelDebug
-	}
-	handler := slog.NewTextHandler(os.Stdout, opts)
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
+	loggingOnce.Do(func() {
+		opts := &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}
+		if verbose {
+			opts.Level = slog.LevelDebug
+		}
+		handler := slog.NewTextHandler(os.Stdout, opts)
+		logger := slog.New(handler)
+		slog.SetDefault(logger)
+	})
 }
 
 // setupCommon configures logging and validates provider-specific flags
@@ -205,15 +212,24 @@ func run(args *cliArgs, sigCh <-chan os.Signal) error {
 		return fmt.Errorf("failed to create application: %w", err)
 	}
 
-	// Start the application
-	ctx := context.Background()
-	if err := application.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start application: %w", err)
-	}
+	// Create error channel for application startup
+	appErrCh := make(chan error, 1)
 
-	// Wait for signal
-	sig := <-sigCh
-	slog.Info("received signal, shutting down", "signal", sig)
+	// Start the application in a goroutine to avoid blocking
+	ctx := context.Background()
+	go func() {
+		if err := application.Start(ctx); err != nil {
+			appErrCh <- fmt.Errorf("failed to start application: %w", err)
+		}
+	}()
+
+	// Wait for either signal or application error
+	select {
+	case sig := <-sigCh:
+		slog.Info("received signal, shutting down", "signal", sig)
+	case err := <-appErrCh:
+		return err
+	}
 
 	// Create shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), constants.DefaultShutdownTimeout)
@@ -230,6 +246,10 @@ func run(args *cliArgs, sigCh <-chan os.Signal) error {
 func main() {
 	args, err := parseCLIArgs(os.Args[1:])
 	if err != nil {
+		// Check if this is a help request
+		if err == flag.ErrHelp {
+			exitFunc(0)
+		}
 		// Flag parsing errors already printed by flag package
 		exitFunc(2)
 	}
