@@ -22,7 +22,7 @@ var version = "dev"
 var exitFunc = os.Exit
 
 // registerProviders explicitly registers all available providers
-func registerProviders() {
+var registerProviders = func() {
 	// Register file provider
 	config.DefaultRegistry.Register("file", config.FileProviderFactory)
 
@@ -120,9 +120,6 @@ func createProvider(args *cliArgs) (config.Provider, error) {
 
 // validateConfig validates the configuration and returns an error if invalid
 func validateConfig(args *cliArgs) error {
-	// Register all available providers
-	registerProviders()
-
 	// Perform common setup
 	if err := setupCommon(args); err != nil {
 		return err
@@ -166,7 +163,7 @@ var newApp = func(cfg *config.Config, opts app.Options) (Application, error) {
 
 // run executes the main application logic
 func run(args *cliArgs, sigCh <-chan os.Signal) error {
-	// Register all available providers
+	// Register all available providers once at the start
 	registerProviders()
 
 	if args.help {

@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -191,6 +192,152 @@ func TestRegisterProviders(t *testing.T) {
 		// If it succeeds, verify we got a valid provider
 		assert.NotNil(t, provider)
 		assert.Equal(t, "docker", provider.Name())
+	}
+}
+
+// TestProviderRegistrationOnce verifies providers are registered only once
+func TestProviderRegistrationOnce(t *testing.T) {
+	// Save original registerProviders function
+	originalRegisterProviders := registerProviders
+	defer func() {
+		registerProviders = originalRegisterProviders
+	}()
+
+	// Track registration calls
+	registrationCalls := make(map[string]int)
+	var mu sync.Mutex
+
+	// Override registerProviders to track calls
+	registerProviders = func() {
+		mu.Lock()
+		defer mu.Unlock()
+
+		// Track file provider registration
+		registrationCalls["file"]++
+		config.DefaultRegistry.Register("file", config.FileProviderFactory)
+
+		// Track docker provider registration
+		registrationCalls["docker"]++
+		config.DefaultRegistry.Register("docker", config.DockerProviderFactory(func(opts config.DockerProviderOptions) (config.Provider, error) {
+			// Return a mock for testing
+			return config.NewFileProvider(""), nil
+		}))
+	}
+
+	// Create valid config file for test
+	configPath := filepath.Join(t.TempDir(), "test.toml")
+	configContent := `
+[tailscale]
+auth_key = "test-auth-key"
+
+[[services]]
+name = "test-service"
+backend_addr = "localhost:8080"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0644))
+
+	// Test validate mode (which should trigger duplicate registration issue)
+	args := &cliArgs{
+		validate:   true,
+		provider:   "file",
+		configPath: configPath,
+	}
+	sigCh := make(chan os.Signal, 1)
+
+	// Run should complete without error
+	err := run(args, sigCh)
+	assert.NoError(t, err)
+
+	// Verify each provider registered only once
+	for name, count := range registrationCalls {
+		assert.Equal(t, 1, count, "Provider %s registered %d times, expected 1", name, count)
+	}
+}
+
+// TestProviderRegistrationBothModes verifies providers are registered correctly in all modes
+func TestProviderRegistrationBothModes(t *testing.T) {
+	// Save originals
+	originalRegisterProviders := registerProviders
+	originalNewApp := newApp
+	defer func() {
+		registerProviders = originalRegisterProviders
+		newApp = originalNewApp
+	}()
+
+	// Create valid config file for test
+	configPath := filepath.Join(t.TempDir(), "test.toml")
+	configContent := `
+[tailscale]
+auth_key = "test-auth-key"
+
+[[services]]
+name = "test-service"
+backend_addr = "localhost:8080"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0644))
+
+	tests := []struct {
+		name string
+		args *cliArgs
+	}{
+		{
+			name: "validate mode",
+			args: &cliArgs{
+				validate:   true,
+				provider:   "file",
+				configPath: configPath,
+			},
+		},
+		{
+			name: "normal mode with help",
+			args: &cliArgs{
+				help:       true,
+				provider:   "file",
+				configPath: configPath,
+			},
+		},
+		{
+			name: "normal mode with version",
+			args: &cliArgs{
+				version:    true,
+				provider:   "file",
+				configPath: configPath,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset tracking for each test
+			registerCalled := false
+			registerProviders = func() {
+				registerCalled = true
+				config.DefaultRegistry.Register("file", config.FileProviderFactory)
+				config.DefaultRegistry.Register("docker", config.DockerProviderFactory(func(opts config.DockerProviderOptions) (config.Provider, error) {
+					return config.NewFileProvider(""), nil
+				}))
+			}
+
+			// Mock app to prevent actual startup
+			newApp = func(cfg *config.Config, opts app.Options) (Application, error) {
+				return &mockApp{}, nil
+			}
+
+			sigCh := make(chan os.Signal, 1)
+
+			// Capture stdout for version/help output
+			oldStdout := os.Stdout
+			_, w, _ := os.Pipe()
+			os.Stdout = w
+
+			_ = run(tt.args, sigCh)
+
+			w.Close()
+			os.Stdout = oldStdout
+
+			// With the new implementation, registerProviders is always called once
+			assert.True(t, registerCalled, "registerProviders should always be called")
+		})
 	}
 }
 
