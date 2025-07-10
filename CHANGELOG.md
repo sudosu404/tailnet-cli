@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2025-07-10
+
+### Fixed
+
+- Added TSBRIDGE_DEBUG environment variable support (#50)
+  - The systemd documentation referenced TSBRIDGE_DEBUG but it was not actually implemented
+  - Now supports enabling verbose logging via TSBRIDGE_DEBUG environment variable
+  - The -verbose CLI flag takes precedence if both are set
+
 ## [0.9.0] - 2025-07-10
 
 ### Added
@@ -264,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.9.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.1
 [0.9.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.0
 [0.8.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.8.0
 [0.7.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.1
