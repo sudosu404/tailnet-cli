@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/jtdowney/tsbridge/internal/config"
 	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/errors"
+	tserrors "github.com/jtdowney/tsbridge/internal/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -48,8 +51,67 @@ type authKeyResponse struct {
 	Created time.Time `json:"created"`
 }
 
-// generateAuthKeyWithOAuth generates a Tailscale auth key using OAuth2 client credentials
+// generateAuthKeyWithOAuth generates a Tailscale auth key using OAuth2 client credentials with retry logic
 func generateAuthKeyWithOAuth(oauthConfig *oauth2.Config, apiBaseURL string, tags []string, ephemeral bool) (string, error) {
+	// Configure exponential backoff with attempt limit
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = constants.RetryInitialInterval
+	b.MaxInterval = constants.RetryMaxInterval
+	b.MaxElapsedTime = constants.RetryMaxElapsedTime
+	b.Multiplier = constants.RetryMultiplier
+	b.RandomizationFactor = constants.RetryRandomizationFactor
+
+	// Limit to 3 attempts using WithMaxRetries
+	backoffWithRetries := backoff.WithMaxRetries(b, constants.RetryMaxAttempts) // 2 retries = 3 total attempts
+
+	var authKey string
+	operation := func() error {
+		var err error
+		authKey, err = generateAuthKeyWithOAuthDirect(oauthConfig, apiBaseURL, tags, ephemeral)
+
+		// Only retry on network errors and 5xx server errors
+		if err != nil && (tserrors.IsNetwork(err) || isRetryableError(err)) {
+			return err
+		}
+
+		// Don't retry on config errors, auth errors, or other non-retryable errors
+		if err != nil {
+			return backoff.Permanent(err)
+		}
+
+		return nil
+	}
+
+	err := backoff.Retry(operation, backoffWithRetries)
+	return authKey, err
+}
+
+// isRetryableError determines if an error is worth retrying
+func isRetryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for HTTP status codes that indicate temporary failures
+	var tsbridgeErr *tserrors.Error
+	if errors.As(err, &tsbridgeErr) && tsbridgeErr.Type == tserrors.ErrTypeNetwork {
+		// Retry on 5xx server errors
+		if tsbridgeErr.HTTPStatusCode >= 500 && tsbridgeErr.HTTPStatusCode < 600 {
+			return true
+		}
+
+		// Also check for other retryable network errors in the message
+		errStr := tsbridgeErr.Error()
+		return strings.Contains(errStr, "timeout") ||
+			strings.Contains(errStr, "connection refused") ||
+			strings.Contains(errStr, "no such host")
+	}
+
+	return false
+}
+
+// generateAuthKeyWithOAuthDirect generates a Tailscale auth key using OAuth2 client credentials (no retry)
+func generateAuthKeyWithOAuthDirect(oauthConfig *oauth2.Config, apiBaseURL string, tags []string, ephemeral bool) (string, error) {
 	ctx := context.Background()
 
 	// Create a client credentials config for automatic token management
@@ -77,21 +139,21 @@ func generateAuthKeyWithOAuth(oauthConfig *oauth2.Config, apiBaseURL string, tag
 	// Marshal request
 	body, err := json.Marshal(req)
 	if err != nil {
-		return "", errors.WrapInternal(err, "marshaling auth key request")
+		return "", tserrors.WrapInternal(err, "marshaling auth key request")
 	}
 
 	// Create HTTP request
 	url := apiBaseURL + "/api/v2/tailnet/-/keys"
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
 	if err != nil {
-		return "", errors.WrapInternal(err, "creating request")
+		return "", tserrors.WrapInternal(err, "creating request")
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	// Make request
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return "", errors.WrapNetwork(err, "making request")
+		return "", tserrors.WrapNetwork(err, "making request")
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -103,13 +165,13 @@ func generateAuthKeyWithOAuth(oauthConfig *oauth2.Config, apiBaseURL string, tag
 	if resp.StatusCode != http.StatusOK {
 		var errResp map[string]interface{}
 		_ = json.NewDecoder(resp.Body).Decode(&errResp)
-		return "", errors.NewNetworkError(fmt.Sprintf("API returned status %d: %v", resp.StatusCode, errResp))
+		return "", tserrors.NewNetworkErrorWithStatus(fmt.Sprintf("API returned status %d: %v", resp.StatusCode, errResp), resp.StatusCode)
 	}
 
 	// Parse response
 	var authKeyResp authKeyResponse
 	if err := json.NewDecoder(resp.Body).Decode(&authKeyResp); err != nil {
-		return "", errors.WrapInternal(err, "decoding response")
+		return "", tserrors.WrapInternal(err, "decoding response")
 	}
 
 	return authKeyResp.Key, nil
@@ -159,5 +221,5 @@ func generateOrResolveAuthKey(cfg config.Config, svc config.Service) (string, er
 	}
 
 	// No auth method configured
-	return "", errors.NewConfigError("no authentication method configured")
+	return "", tserrors.NewConfigError("no authentication method configured")
 }
