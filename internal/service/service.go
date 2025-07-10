@@ -103,7 +103,6 @@ func (r *Registry) StartServices() error {
 	for _, svcCfg := range r.config.Services {
 		svc, err := r.startService(svcCfg)
 		if err != nil {
-			slog.Error("failed to start service", "service", svcCfg.Name, "error", err)
 			failedServices[svcCfg.Name] = err
 			continue // Skip failed services as per spec
 		}
@@ -265,7 +264,7 @@ func (s *Service) CreateHandler() (http.Handler, error) {
 			// Create a whois client adapter for the tsnet server
 			whoisClient := tailscale.NewWhoisClientAdapter(serviceServer)
 			// Use the whois middleware with internalized cache
-			httpHandler = middleware.Whois(whoisClient, whoisEnabled, whoisTimeout, 1000, 5*time.Minute)(httpHandler)
+			httpHandler = middleware.Whois(whoisClient, whoisEnabled, whoisTimeout, constants.DefaultWhoisCacheSize, constants.DefaultWhoisCacheTTL)(httpHandler)
 		}
 	}
 
@@ -436,7 +435,7 @@ func (r *Registry) RemoveService(name string) error {
 	}
 
 	// Stop the service (this will close listener and handler)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.ServiceStopTimeout)
 	defer cancel()
 
 	if err := svc.Stop(ctx); err != nil {
@@ -592,16 +591,6 @@ func (r *Registry) UpdateService(name string, newCfg config.Service) error {
 			r.metricsCollector.RecordServiceOperation("update", false, time.Since(start))
 			r.metricsCollector.SetActiveServices(len(r.services))
 		}
-
-		// Log detailed error information to help with troubleshooting
-		slog.Error("service update failed",
-			"service", name,
-			"error", err,
-			"old_backend", oldConfig.BackendAddr,
-			"new_backend", newCfg.BackendAddr,
-			"old_tls_mode", oldConfig.TLSMode,
-			"new_tls_mode", newCfg.TLSMode,
-		)
 
 		return fmt.Errorf("failed to start updated service %s: %w", name, err)
 	}
