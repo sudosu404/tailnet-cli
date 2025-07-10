@@ -15,7 +15,7 @@ services:
       # Tailscale OAuth configuration
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-      - "tsbridge.tailscale.oauth_tags=tag:server,tag:proxy"
+      - "tsbridge.tailscale.default_tags=tag:server,tag:proxy"
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
 
       # Global configuration
