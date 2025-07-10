@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-07-10
+
+### Added
+
+- STATE_DIRECTORY environment variable support (#49)
+  - Allows overriding the default state directory location
+  - Useful for containerized deployments and systems with specific directory requirements
+- Retry logic with exponential backoff (#47)
+  - Improved resilience for backend connections
+  - Configurable retry attempts and delays
+  - Exponential backoff prevents overwhelming failing backends
+
+### Fixed
+
+- Improved signal handling and CLI behavior
+  - Better graceful shutdown handling
+  - More responsive to interrupt signals
+- Resolved duplicate provider registration issue
+  - Fixed panic when multiple configuration providers were registered
+  - Improved provider initialization logic
+
+### Development
+
+- Increased test coverage for OAuth error handling
+- Simplified service configuration comparison using go-cmp library
+- Consolidated test helper functions for better maintainability
+- Simplified Duration and ByteSize configuration types
+- Added RedactedString type for sensitive configuration fields
+- Refactored main.go with more focused, testable functions
+
 ## [0.8.0] - 2025-07-07
 
 ### Added
@@ -234,6 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.9.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.0
 [0.8.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.8.0
 [0.7.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.1
 [0.7.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.0
