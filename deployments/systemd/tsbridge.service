@@ -34,9 +34,6 @@ RemoveIPC=true
 StateDirectory=tsbridge
 StateDirectoryMode=0750
 
-# Allow writing to state directory
-ReadWritePaths=/var/lib/tsbridge
-
 # Resource limits
 LimitNOFILE=65535
 LimitNPROC=512
