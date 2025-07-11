@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STATE_DIRECTORY environment variable support (#49)
   - Allows overriding the default state directory location
   - Useful for containerized deployments and systems with specific directory requirements
+  - Thanks to @namelessjon for the suggestion
 - Retry logic with exponential backoff (#47)
   - Improved resilience for backend connections
   - Configurable retry attempts and delays
