@@ -31,4 +31,7 @@ Thumbs.db
 
 # pre-commit
 .pre-commit-config.yaml.lock
+
+# AI tools
 .serena
+.claude/settings.local.json
