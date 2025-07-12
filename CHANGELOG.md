@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2025-07-12
+
+### Added
+
+- Trace-level debug logging for tsnet authentication and startup (#53)
+  - Provides detailed debugging information for troubleshooting connection issues
+  - Helps diagnose tsnet authentication and initialization problems
+  - Only active when verbose logging is enabled
+
+### Fixed
+
+- Skip state check for ephemeral services (#55)
+  - Ephemeral services no longer fail startup when state directory is unavailable
+  - Improves compatibility with containerized and stateless deployments
+  - Ephemeral services now work correctly without persistent state requirements
+  - Thanks to @svenvg93 for reporting the bug
+
+### Development
+
+- CI: Capture GoReleaser artifacts on PR builds (#54)
+  - Artifacts from PR builds are now available for testing
+  - Improves pre-release testing workflow
+
+### Documentation
+
+- Fixed docker-compose example for v0.7.0 breaking change
+- Removed redundant ReadWritePaths from systemd service documentation
+
 ## [0.9.1] - 2025-07-10
 
 ### Fixed
@@ -274,6 +302,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.9.2]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.2
 [0.9.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.1
 [0.9.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.0
 [0.8.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.8.0
