@@ -74,6 +74,9 @@ labels:
 
   # Default tags for all services (comma-separated)
   - "tsbridge.tailscale.default_tags=tag:tsbridge,tag:proxy"
+
+  # Control server URL (optional - for Headscale or custom control servers)
+  - "tsbridge.tailscale.control_url=https://headscale.example.com"
 ```
 
 #### Global Defaults
@@ -141,6 +144,9 @@ labels:
 
   # TLS mode
   - "tsbridge.service.tls_mode=auto" # or "off"
+  
+  # Listen port (optional, defaults: 443 for TLS, 80 for non-TLS)
+  - "tsbridge.service.listen_port=8443"
 
   # Service-specific timeouts (override global)
   - "tsbridge.service.read_header_timeout=60s"
@@ -242,13 +248,13 @@ Unlike polling-based systems, tsbridge uses Docker's event stream for immediate 
 ```yaml
 # Example: Rolling deployment with zero downtime
 # 1. Start new version of your service
-docker-compose up -d api-v2  # tsbridge detects and adds the service
+docker compose up -d api-v2  # tsbridge detects and adds the service
 
 # 2. Verify new version is working
 curl https://api-v2.example.ts.net/health
 
 # 3. Stop old version
-docker-compose stop api-v1   # tsbridge detects and removes the service
+docker compose stop api-v1   # tsbridge detects and removes the service
 ```
 
 ### Important Notes
