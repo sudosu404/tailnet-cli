@@ -5,7 +5,19 @@ All notable changes to tsbridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.1] - 2025-07-16
+
+### Fixed
+
+- Allow startup without OAuth/authkey for pre-registered services (#62)
+  - Services that are already registered with Tailscale no longer require OAuth credentials
+  - Credentials are now only required for registering new services
+
+### Testing
+
+- Resolved race conditions in test mocks (#61)
+  - Fixed concurrent map access issues in mock implementations
+  - Improved test reliability and stability
 
 ## [0.10.0] - 2025-07-16
 
@@ -329,6 +341,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.10.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.1
 [0.10.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.0
 [0.9.2]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.2
 [0.9.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.1
