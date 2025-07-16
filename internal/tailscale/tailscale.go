@@ -35,22 +35,13 @@ type Server struct {
 
 // NewServerWithFactory creates a new tailscale server instance with a custom TSNetServer factory
 func NewServerWithFactory(cfg config.Tailscale, factory tsnetpkg.TSNetServerFactory) (*Server, error) {
-	// Config package has already resolved all secrets, so we can use them directly
-	authKey := cfg.AuthKey
-	clientID := cfg.OAuthClientID
-	clientSecret := cfg.OAuthClientSecret
-
-	// Validate we have either AuthKey or OAuth credentials
-	if authKey == "" && (clientID == "" || clientSecret == "") {
-		// Provide more specific error message
-		switch {
-		case clientID == "" && clientSecret == "":
-			return nil, tserrors.NewConfigError("either auth key or OAuth credentials (client ID and secret) must be provided")
-		case clientID == "":
-			return nil, tserrors.NewConfigError("OAuth client ID is required when using OAuth authentication")
-		default:
-			return nil, tserrors.NewConfigError("OAuth client secret is required when using OAuth authentication")
+	// Validate OAuth credentials if provided - both must be present or neither
+	if (cfg.OAuthClientID != "" && cfg.OAuthClientSecret == "") ||
+		(cfg.OAuthClientID == "" && cfg.OAuthClientSecret != "") {
+		if cfg.OAuthClientID == "" {
+			return nil, tserrors.NewConfigError("OAuth client secret provided without client ID")
 		}
+		return nil, tserrors.NewConfigError("OAuth client ID provided without client secret")
 	}
 
 	return &Server{
@@ -176,6 +167,11 @@ func (s *Server) prepareServiceAuth(serviceServer tsnetpkg.TSNetServer, svc conf
 	}
 
 	if needsAuthKey {
+		// Now we actually need auth, so validate that we have OAuth or authkey
+		if err := ValidateTailscaleSecrets(s.config); err != nil {
+			return tserrors.WrapConfig(err, fmt.Sprintf("service %q needs authentication but %s", svc.Name, err.Error()))
+		}
+
 		slog.Debug("generating auth key", "service", svc.Name, "reason", authKeyReason)
 		cfg := config.Config{Tailscale: s.config}
 		authKey, err := generateOrResolveAuthKey(cfg, svc)
