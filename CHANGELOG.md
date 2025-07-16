@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-07-16
+
+### Added
+
+- Headscale support (#60)
+  - Added support for Headscale as an alternative to Tailscale's coordination server
+  - Enables use of self-hosted Tailscale coordination servers
+  - Configurable via existing Tailscale configuration options
+  - Thanks to @korpa for the suggestion
+
+### Fixed
+
+- Add missing state_dir_env to Docker provider (#59)
+  - Docker provider now properly handles state directory environment variables
+  - Improves compatibility with containerized deployments
+
+### Documentation
+
+- Add security policy
+  - Added SECURITY.md with vulnerability reporting guidelines
+
+### Dependencies
+
+- Bumped github.com/docker/docker (#57)
+  - Updated Docker client library to latest version
+  - Improved compatibility and security
+
 ## [0.9.2] - 2025-07-12
 
 ### Added
@@ -302,6 +329,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.10.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.0
 [0.9.2]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.2
 [0.9.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.1
 [0.9.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.0
