@@ -5,6 +5,50 @@ All notable changes to tsbridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-07-17
+
+### Added
+
+- Simplified listener configuration to use listen_addr (#68)
+  - Replaces separate listen_port field with a single listen_addr field
+  - Provides more flexibility for binding to specific interfaces
+  - Supports formats like ":8080", "127.0.0.1:8080", "[::1]:8080"
+  - Default to ":443" for TLS mode, ":80" for non-TLS mode
+
+- tsnet logging adapters to reduce log noise (#64)
+  - Improved log output readability by filtering tsnet internal logs
+  - Better separation of tsbridge logs from underlying tsnet logs
+
+### Changed
+
+- **BREAKING:** listen_port configuration field has been replaced by listen_addr (#68)
+  - Migration: Change `listen_port = 8080` to `listen_addr = ":8080"`
+  - For specific interfaces, use `listen_addr = "127.0.0.1:8080"`
+  
+- **BREAKING:** Configuration resolution order is now strict: direct > file > env > default (#67)
+  - Empty environment variables configured with _env suffix now return an error
+  - Previously would silently fall back to defaults
+
+### Fixed
+
+- Configuration resolution order now properly prioritizes configured sources (#67)
+  - Files (_file suffix) and env vars (_env suffix) no longer silently fall back
+  - Direct values are properly preserved through resolution
+  - Clear error messages when configured sources are missing or empty
+
+### Removed
+
+- Unimplemented connection pool metrics code (#66)
+  - Removed dead code that was never fully implemented
+  - Simplifies codebase maintenance
+
+### Documentation
+
+- Restructured documentation for better organization (#65)
+- Simplified README for clarity and developer focus
+- Updated configuration reference with clearer resolution order explanation
+- Updated Docker labels documentation with new listen_addr field
+
 ## [0.10.1] - 2025-07-16
 
 ### Fixed
@@ -341,6 +385,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.11.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.0
 [0.10.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.1
 [0.10.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.0
 [0.9.2]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.2
