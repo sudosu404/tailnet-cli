@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved Docker container self-discovery by listing all containers instead of relying on Docker's ID filter (#70)
   - Fixes issues where tsbridge couldn't find its own container in certain Docker environments
   - Improves compatibility with different container runtime configurations
+  - Thanks to @korpa and @rbollampally for their help identifying the issue and testing the fix
 
 ### Internal
 
@@ -37,15 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING:** listen_port configuration field has been replaced by listen_addr (#68)
   - Migration: Change `listen_port = 8080` to `listen_addr = ":8080"`
   - For specific interfaces, use `listen_addr = "127.0.0.1:8080"`
-  
 - **BREAKING:** Configuration resolution order is now strict: direct > file > env > default (#67)
-  - Empty environment variables configured with _env suffix now return an error
+  - Empty environment variables configured with \_env suffix now return an error
   - Previously would silently fall back to defaults
 
 ### Fixed
 
 - Configuration resolution order now properly prioritizes configured sources (#67)
-  - Files (_file suffix) and env vars (_env suffix) no longer silently fall back
+  - Files (\_file suffix) and env vars (\_env suffix) no longer silently fall back
   - Direct values are properly preserved through resolution
   - Clear error messages when configured sources are missing or empty
 
