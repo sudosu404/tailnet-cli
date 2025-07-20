@@ -5,6 +5,19 @@ All notable changes to tsbridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2025-07-20
+
+### Fixed
+
+- Improved Docker container self-discovery by listing all containers instead of relying on Docker's ID filter (#70)
+  - Fixes issues where tsbridge couldn't find its own container in certain Docker environments
+  - Improves compatibility with different container runtime configurations
+
+### Internal
+
+- Added debug logging to Docker provider startup for better troubleshooting
+- Enhanced container discovery logging to aid in debugging
+
 ## [0.11.0] - 2025-07-17
 
 ### Added
@@ -385,6 +398,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.11.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.1
 [0.11.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.0
 [0.10.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.1
 [0.10.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.0
