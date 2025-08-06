@@ -104,7 +104,7 @@ services:
     labels:
       - "tsbridge.enabled=true"
       - "tsbridge.service.name=whoami"
-      - "tsbridge.service.port=8080"
+      - "tsbridge.service.port=80"
 
 volumes:
   tsbridge-state:
