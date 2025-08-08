@@ -275,7 +275,11 @@ func createProxyTransport(backendAddr string, config *TransportConfig) *http.Tra
 			// Handle unix socket addresses
 			if strings.HasPrefix(backendAddr, "unix://") {
 				socketPath := strings.TrimPrefix(backendAddr, "unix://")
-				return net.Dial("unix", socketPath)
+				// Use DialContext so dialing respects the request context (timeouts/cancellation)
+				d := net.Dialer{
+					Timeout: config.DialTimeout,
+				}
+				return d.DialContext(ctx, "unix", socketPath)
 			}
 			// Regular TCP dial
 			d := net.Dialer{

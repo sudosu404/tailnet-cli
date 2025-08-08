@@ -253,6 +253,34 @@ func TestUnixSocketProxy(t *testing.T) {
 	}
 }
 
+// Test that dialing a unix socket honors the request context (timeouts/cancellation)
+func TestUnixSocketDialRespectsContextCancellation(t *testing.T) {
+	tmpDir := t.TempDir()
+	socketPath := filepath.Join(tmpDir, "nonexistent.sock")
+
+	// Create proxy handler pointing at a non-listening unix socket
+	handler, err := newTestHandler("unix://"+socketPath, defaultTestTransportConfig(), nil)
+	require.NoError(t, err)
+
+	// Use an already-expired context to ensure DialContext sees cancellation immediately
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-1*time.Second))
+	defer cancel()
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	start := time.Now()
+	handler.ServeHTTP(rr, req)
+	elapsed := time.Since(start)
+
+	// Expect that the proxy surfaces a timeout (504)
+	assert.Equal(t, http.StatusGatewayTimeout, rr.Code)
+	assert.Contains(t, rr.Body.String(), "Gateway Timeout")
+
+	// And that it returned quickly (didn't block on a long dial)
+	assert.Less(t, elapsed, 200*time.Millisecond)
+}
+
 func TestProxyWithTimeouts(t *testing.T) {
 	// Create a slow backend
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -735,7 +763,7 @@ func TestErrorHandlerUsesCorrectStatus(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// Create a simple error handler function
-			errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
+			errorHandler := func(w http.ResponseWriter, _ *http.Request, err error) {
 				var status int
 
 				// Check for timeout errors using proper type assertion
