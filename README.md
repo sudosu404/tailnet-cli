@@ -5,6 +5,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/jtdowney/tsbridge)](https://goreportcard.com/report/github.com/jtdowney/tsbridge)
 [![License](https://img.shields.io/github/license/jtdowney/tsbridge)](https://github.com/jtdowney/tsbridge/blob/main/LICENSE)
 
+<img src="assets/logo.png" alt="tsbridge logo" width="320" />
+
 tsbridge acts as a tsnet-powered reverse proxy, letting you expose multiple backend services on your Tailnet from a single process. It's designed for homelabs and development environments where you want the magic of Tailscale without the hassle of running a separate sidecar for every service.
 
 Inspired by Traefik, tsbridge can be configured with a simple TOML file or by watching Docker for container labels.
@@ -97,7 +99,7 @@ services:
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      - "tsbridge.tailscale.default_tags=tag:server"  # Must match or be owned by your OAuth client's tag
+      - "tsbridge.tailscale.default_tags=tag:server" # Must match or be owned by your OAuth client's tag
 
   whoami:
     image: traefik/whoami
