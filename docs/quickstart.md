@@ -20,8 +20,6 @@ Create `tsbridge.toml`:
 [tailscale]
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
 oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
-
-[global]
 default_tags = ["tag:server"]  # Must match or be owned by your OAuth client's tag
 
 [[services]]
@@ -87,9 +85,9 @@ flush_interval = "-1ms"  # No buffering
 oauth_client_id_file = "/etc/tsbridge/oauth-id"
 oauth_client_secret_file = "/etc/tsbridge/oauth-secret"
 state_dir = "/var/lib/tsbridge"
+default_tags = ["tag:server", "tag:prod"]
 
 [global]
-default_tags = ["tag:server", "tag:prod"]
 metrics_addr = ":9090"  # Prometheus metrics
 
 [[services]]
@@ -145,7 +143,7 @@ tsbridge -config tsbridge.toml -validate
 
 ### Common Issues
 
-- **"services must have at least one tag"**: Add `default_tags` to `[global]` section
+- **"services must have at least one tag"**: Add `default_tags` to `[tailscale]` section
 - **"OAuth client ID not set"**: Check your environment variables
 - **Connection timeouts**: For streaming, set `write_timeout = "0s"`
 - **Tag authorization errors**: Ensure tags match or are owned by your OAuth client's tag. See [Tag Ownership and OAuth Security](configuration-reference.md#tag-ownership-and-oauth-security)
