@@ -139,6 +139,48 @@ func TestServiceConfigEqual(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "different oauth preauthorized setting",
+			a: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: boolPtr(true),
+			},
+			b: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: boolPtr(false),
+			},
+			expected: false,
+		},
+		{
+			name: "nil vs non-nil oauth preauthorized",
+			a: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: nil,
+			},
+			b: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: boolPtr(false),
+			},
+			expected: false,
+		},
+		{
+			name: "both nil oauth preauthorized",
+			a: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: nil,
+			},
+			b: Service{
+				Name:               "test-service",
+				BackendAddr:        "http://localhost:8080",
+				OAuthPreauthorized: nil,
+			},
+			expected: true,
+		},
+		{
 			name: "different ephemeral setting",
 			a: Service{
 				Name:        "test-service",
@@ -423,6 +465,7 @@ func TestServiceConfigEqualCoversAllFields(t *testing.T) {
 		"RemoveUpstream":        true,
 		"RemoveDownstream":      true,
 		"MaxRequestBodySize":    true,
+		"OAuthPreauthorized":    true,
 	}
 
 	// Check that all struct fields are in our comparison
