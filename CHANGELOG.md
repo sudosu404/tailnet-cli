@@ -5,6 +5,52 @@ All notable changes to tsbridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2025-08-20
+
+### Breaking Changes
+
+- OAuth-generated auth keys are now preauthorized by default (#98)
+  - Previous behavior required manual device approval
+  - To restore previous behavior, set `oauth_preauthorized=false`
+
+### Added
+
+- Support for TLS/HTTPS upstream backends (#83)
+  - Backends can now be specified as `https://` URLs
+  - Added `insecure_skip_verify` option for self-signed certificates
+  - Automatically configures TLS transport for HTTPS backends
+
+### Fixed
+
+- Prevent shutdown hanging during tsnet authentication (#101)
+  - Add 3-second timeout for tsnet server close operations
+  - Prevent indefinite hanging when tsnet.Close() blocks
+- Unified TLS mode accepted values to only allow "auto" and "off" (#93)
+  - Removed invalid "on" value that was incorrectly documented
+- Respect request context when dialing unix sockets (#91)
+- Restored container name matching in Docker self-discovery (#80)
+
+### Changed
+
+- Improved secret validation to use RedactedString.Value() method (#92)
+
+### Dependencies
+
+- Bump tailscale.com from 1.84.3 to 1.86.4 (#77, #94)
+- Bump github.com/prometheus/client_golang (#87)
+- Bump github.com/docker/docker (#79)
+- Bump github.com/go-viper/mapstructure/v2 (#72)
+
+### Documentation
+
+- Added default_tags to OAuth docker-compose examples (#89)
+  - Thanks to @jbp35 for reporting the missing tags issue (#88)
+- Fixed default_tags placement in quickstart guide
+  - Thanks to @beautiful-orca for reporting the documentation mistake (#96)
+- Fixed traefik/whoami port in Docker example
+  - Thanks to @jbp35 for reporting the incorrect port in the documentation (#88)
+- Added logo and README reference
+
 ## [0.11.1] - 2025-07-20
 
 ### Fixed
@@ -24,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Simplified listener configuration to use listen_addr (#68)
+
   - Replaces separate listen_port field with a single listen_addr field
   - Provides more flexibility for binding to specific interfaces
   - Supports formats like ":8080", "127.0.0.1:8080", "[::1]:8080"
@@ -398,6 +445,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.12.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.12.0
 [0.11.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.1
 [0.11.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.0
 [0.10.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.1
