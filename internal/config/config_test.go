@@ -933,7 +933,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "backend address is required",
+			wantErr: "backend address cannot be empty",
 		},
 		{
 			name: "invalid backend address format",
@@ -980,6 +980,57 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			wantErr: "read_header_timeout cannot be negative",
+		},
+		{
+			name: "valid https backend",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:         "api",
+						BackendAddr:  "https://example.com:443",
+						WhoisEnabled: &trueVal,
+						WhoisTimeout: testhelpers.DurationPtr(1 * time.Second),
+						Tags:         []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "https backend with insecure_skip_verify",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:               "api",
+						BackendAddr:        "https://self-signed.example.com:443",
+						WhoisEnabled:       &trueVal,
+						WhoisTimeout:       testhelpers.DurationPtr(1 * time.Second),
+						InsecureSkipVerify: &trueVal,
+						Tags:               []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "",
 		},
 		{
 			name: "valid unix socket",
@@ -1522,6 +1573,102 @@ func TestValidate(t *testing.T) {
 						Name:        "api",
 						BackendAddr: "127.0.0.1:8080",
 						Tags:        []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecure_skip_verify with HTTPS backend is valid",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:               "api",
+						BackendAddr:        "https://example.com:8080",
+						InsecureSkipVerify: &trueVal,
+						Tags:               []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "insecure_skip_verify with HTTP backend is invalid",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:               "api",
+						BackendAddr:        "http://example.com:8080",
+						InsecureSkipVerify: &trueVal,
+						Tags:               []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "insecure_skip_verify is only supported for HTTPS backends",
+		},
+		{
+			name: "insecure_skip_verify with TCP backend is invalid",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:               "api",
+						BackendAddr:        "127.0.0.1:8080",
+						InsecureSkipVerify: &trueVal,
+						Tags:               []string{"tag:test"},
+					},
+				},
+			},
+			wantErr: "insecure_skip_verify is only supported for HTTPS backends",
+		},
+		{
+			name: "insecure_skip_verify false with HTTP backend is valid",
+			config: &Config{
+				Tailscale: Tailscale{
+					OAuthClientID:     "test-id",
+					OAuthClientSecret: "test-secret",
+				},
+				Global: Global{
+					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
+					WriteTimeout:      testhelpers.DurationPtr(10 * time.Second),
+					IdleTimeout:       testhelpers.DurationPtr(120 * time.Second),
+					ShutdownTimeout:   testhelpers.DurationPtr(15 * time.Second),
+				},
+				Services: []Service{
+					{
+						Name:               "api",
+						BackendAddr:        "http://example.com:8080",
+						InsecureSkipVerify: &falseVal,
+						Tags:               []string{"tag:test"},
 					},
 				},
 			},
@@ -3185,4 +3332,214 @@ max_request_body_size = "-1"
 
 func int64Ptr(i int64) *int64 {
 	return &i
+}
+
+func TestValidateBackendAddress(t *testing.T) {
+	tests := []struct {
+		name    string
+		addr    string
+		wantErr bool
+		errMsg  string
+	}{
+		// Valid TCP addresses (host:port format)
+		{
+			name:    "valid localhost with port",
+			addr:    "localhost:8080",
+			wantErr: false,
+		},
+		{
+			name:    "valid IP with port",
+			addr:    "127.0.0.1:3000",
+			wantErr: false,
+		},
+		{
+			name:    "valid IPv6 with port",
+			addr:    "[::1]:8080",
+			wantErr: false,
+		},
+		{
+			name:    "valid domain with port",
+			addr:    "api.example.com:443",
+			wantErr: false,
+		},
+		{
+			name:    "valid high port",
+			addr:    "0.0.0.0:65535",
+			wantErr: false,
+		},
+		{
+			name:    "valid low port",
+			addr:    "localhost:1",
+			wantErr: false,
+		},
+		{
+			name:    "port only (binds to all interfaces)",
+			addr:    ":8080",
+			wantErr: false,
+		},
+
+		// Valid unix socket addresses
+		{
+			name:    "valid unix socket",
+			addr:    "unix:///var/run/app.sock",
+			wantErr: false,
+		},
+		{
+			name:    "valid unix socket with complex path",
+			addr:    "unix:///tmp/sockets/app.sock",
+			wantErr: false,
+		},
+
+		// Valid HTTP/HTTPS URLs
+		{
+			name:    "valid http URL with port",
+			addr:    "http://localhost:8080",
+			wantErr: false,
+		},
+		{
+			name:    "valid https URL with port",
+			addr:    "https://api.example.com:443",
+			wantErr: false,
+		},
+		{
+			name:    "valid http URL without port",
+			addr:    "http://example.com",
+			wantErr: false,
+		},
+		{
+			name:    "valid https URL without port",
+			addr:    "https://example.com",
+			wantErr: false,
+		},
+		{
+			name:    "valid https URL with path",
+			addr:    "https://example.com/api/v1",
+			wantErr: false,
+		},
+		{
+			name:    "valid http URL with query params",
+			addr:    "http://localhost:8080?foo=bar",
+			wantErr: false,
+		},
+
+		// Invalid addresses - empty
+		{
+			name:    "empty address",
+			addr:    "",
+			wantErr: true,
+			errMsg:  "backend address cannot be empty",
+		},
+
+		// Invalid addresses - format issues
+		{
+			name:    "missing port in TCP address",
+			addr:    "localhost",
+			wantErr: true,
+			errMsg:  "invalid backend address",
+		},
+		{
+			name:    "just colon",
+			addr:    ":",
+			wantErr: true,
+			errMsg:  "invalid port",
+		},
+		{
+			name:    "invalid unix prefix",
+			addr:    "unix:/var/run/app.sock",
+			wantErr: true,
+			errMsg:  "unix socket path must start with unix://",
+		},
+		{
+			name:    "unix with port",
+			addr:    "unix://socket:8080",
+			wantErr: true,
+			errMsg:  "unix socket cannot have port",
+		},
+
+		// Invalid addresses - port range
+		{
+			name:    "port zero",
+			addr:    "localhost:0",
+			wantErr: true,
+			errMsg:  "port in backend address must be between 1 and 65535",
+		},
+		{
+			name:    "port too high",
+			addr:    "localhost:65536",
+			wantErr: true,
+			errMsg:  "port in backend address must be between 1 and 65535",
+		},
+		{
+			name:    "negative port",
+			addr:    "localhost:-1",
+			wantErr: true,
+			errMsg:  "port in backend address must be between 1 and 65535",
+		},
+		{
+			name:    "non-numeric port",
+			addr:    "localhost:abc",
+			wantErr: true,
+			errMsg:  "invalid port",
+		},
+
+		// Invalid addresses - path traversal in unix sockets
+		{
+			name:    "unix path traversal",
+			addr:    "unix://../../../etc/passwd",
+			wantErr: true,
+			errMsg:  "invalid unix socket path",
+		},
+		{
+			name:    "unix relative path",
+			addr:    "unix://./socket",
+			wantErr: true,
+			errMsg:  "unix socket path must be absolute",
+		},
+
+		// Invalid HTTP/HTTPS URLs
+		{
+			name:    "http URL without host",
+			addr:    "http://",
+			wantErr: true,
+			errMsg:  "backend URL must have a host",
+		},
+		{
+			name:    "https URL without host",
+			addr:    "https://",
+			wantErr: true,
+			errMsg:  "backend URL must have a host",
+		},
+		{
+			name:    "http URL with invalid port",
+			addr:    "http://localhost:99999",
+			wantErr: true,
+			errMsg:  "port must be between 1 and 65535",
+		},
+		{
+			name:    "https URL with invalid port",
+			addr:    "https://example.com:0",
+			wantErr: true,
+			errMsg:  "port must be between 1 and 65535",
+		},
+		{
+			name:    "malformed URL",
+			addr:    "http://[invalid",
+			wantErr: true,
+			errMsg:  "invalid backend URL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateBackendAddress(tt.addr)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error for address %q", tt.addr)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg, "Error message mismatch for address %q", tt.addr)
+				}
+			} else {
+				assert.NoError(t, err, "Expected no error for address %q", tt.addr)
+			}
+		})
+	}
 }
