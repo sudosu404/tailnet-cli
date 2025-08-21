@@ -365,7 +365,7 @@ func (s *Server) closeServerWithTimeout(server tsnetpkg.TSNetServer, serviceName
 		return nil
 	case <-timer.C:
 		slog.Warn("tsnet server close timed out, forcing shutdown", "service", serviceName, "timeout", timeout, "duration", time.Since(start))
-		return tserrors.WrapResource(fmt.Errorf("close timeout after %v", timeout), fmt.Sprintf("closing service %q", serviceName))
+		return tserrors.NewTimeoutError(fmt.Sprintf("closing service %q", serviceName), timeout)
 	}
 }
 

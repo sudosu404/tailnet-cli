@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // ErrorType represents the category of error
@@ -389,4 +390,58 @@ func WrapProviderError(err error, provider string, errType ErrorType, operation 
 			Cause:    err,
 		},
 	}
+}
+
+// TimeoutError represents a timeout during an operation
+type TimeoutError struct {
+	Operation string
+	Timeout   time.Duration
+	Cause     error
+}
+
+// Error implements the error interface
+func (e *TimeoutError) Error() string {
+	if e.Cause != nil {
+		return fmt.Sprintf("%s timed out after %v: %v", e.Operation, e.Timeout, e.Cause)
+	}
+	return fmt.Sprintf("%s timed out after %v", e.Operation, e.Timeout)
+}
+
+// Unwrap returns the underlying error
+func (e *TimeoutError) Unwrap() error {
+	return e.Cause
+}
+
+// NewTimeoutError creates a new timeout error
+func NewTimeoutError(operation string, timeout time.Duration) error {
+	return &Error{
+		Type:    ErrTypeResource,
+		Message: "operation timeout",
+		Err: &TimeoutError{
+			Operation: operation,
+			Timeout:   timeout,
+		},
+	}
+}
+
+// WrapTimeoutError wraps an error as a timeout error
+func WrapTimeoutError(err error, operation string, timeout time.Duration) error {
+	return &Error{
+		Type:    ErrTypeResource,
+		Message: "operation timeout",
+		Err: &TimeoutError{
+			Operation: operation,
+			Timeout:   timeout,
+			Cause:     err,
+		},
+	}
+}
+
+// IsTimeout checks if an error is a timeout error
+func IsTimeout(err error) bool {
+	if err == nil {
+		return false
+	}
+	var timeoutErr *TimeoutError
+	return errors.As(err, &timeoutErr)
 }

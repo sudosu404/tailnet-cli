@@ -232,9 +232,14 @@ func (a *App) performShutdown(ctx context.Context) error {
 
 	// Close tailscale server
 	if err := a.tsServer.Close(); err != nil {
-		wrappedErr := tserrors.WrapResource(err, "failed to close tailscale server")
-		slog.Error("failed to close tailscale server", "error", err)
-		errs = append(errs, wrappedErr)
+		// Check if it's a timeout error - log but don't fail shutdown
+		if tserrors.IsTimeout(err) {
+			slog.Warn("tailscale server close timed out but continuing shutdown", "error", err)
+		} else {
+			wrappedErr := tserrors.WrapResource(err, "failed to close tailscale server")
+			slog.Error("failed to close tailscale server", "error", err)
+			errs = append(errs, wrappedErr)
+		}
 	}
 
 	if len(errs) == 0 {
