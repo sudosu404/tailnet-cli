@@ -1,0 +1,30 @@
+services:
+  tsbridge:
+    image: ghcr.io/jtdowney/tsbridge:latest
+    command: ["--provider", "docker", "--verbose"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - tsbridge-state:/var/lib/tsbridge
+    environment:
+      # Replace with your actual OAuth credentials
+      # You can get these from: https://login.tailscale.com/admin/settings/oauth
+      - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
+      - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
+    labels:
+      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
+      - "tsbridge.tailscale.default_tags=tag:server" # Must match or be owned by your OAuth client's tag
+      - "tsbridge.global.metrics_addr=:9090"
+    ports:
+      - "9090:9090" # Metrics port
+    networks:
+      - tsbridge-network
+
+volumes:
+  tsbridge-state:
+
+networks:
+  tsbridge-network:
+    # Network is created by this compose file and shared with other compose files
+    name: tsbridge-shared-network

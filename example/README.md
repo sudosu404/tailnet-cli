@@ -24,6 +24,22 @@ export TS_OAUTH_CLIENT_SECRET="your-client-secret"
 docker compose up
 ```
 
+## multi-compose/
+
+tsbridge and services in separate compose files with shared networking:
+
+```bash
+cd multi-compose
+export TS_OAUTH_CLIENT_ID="your-client-id"
+export TS_OAUTH_CLIENT_SECRET="your-client-secret"
+
+# Start tsbridge first (creates shared network)
+docker compose -f tsbridge-compose.yml up -d
+
+# Start services (uses external network) 
+docker compose -f services-compose.yml up -d
+```
+
 ## headscale/
 
 Self-hosted control server with Headscale:

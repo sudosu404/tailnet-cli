@@ -133,6 +133,8 @@ volumes:
   tsbridge-state:
 ```
 
+> **Network Requirements**: tsbridge and service containers must be on the same Docker network. They don't need to be in the same compose file, but network connectivity is required. See [Docker Labels - Docker Networking](docker-labels.md#docker-networking) for multi-compose setups.
+
 ## Troubleshooting
 
 ### Validate Your Config

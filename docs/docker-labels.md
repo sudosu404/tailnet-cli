@@ -21,7 +21,7 @@ services:
       - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
       - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      - "tsbridge.tailscale.default_tags=tag:server"  # Must match or be owned by your OAuth client's tag
+      - "tsbridge.tailscale.default_tags=tag:server" # Must match or be owned by your OAuth client's tag
 
   myapp:
     image: myapp:latest
@@ -55,10 +55,10 @@ labels:
   - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
   - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
   - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-  
+
   # Optional: defaults
   - "tsbridge.tailscale.default_tags=tag:server,tag:proxy"
-  - "tsbridge.tailscale.oauth_preauthorized=false"  # Require manual device approval (default: true)
+  - "tsbridge.tailscale.oauth_preauthorized=false" # Require manual device approval (default: true)
   - "tsbridge.global.metrics_addr=:9090"
   - "tsbridge.global.write_timeout=30s"
 ```
@@ -69,16 +69,16 @@ labels:
 labels:
   # Required
   - "tsbridge.enabled=true"
-  
+
   # Service config (pick one)
-  - "tsbridge.service.port=8080"                    # Recommended
-  - "tsbridge.service.backend_addr=myservice:8080"  # If you need specific host
-  
+  - "tsbridge.service.port=8080" # Recommended
+  - "tsbridge.service.backend_addr=myservice:8080" # If you need specific host
+
   # Optional
-  - "tsbridge.service.name=custom-name"      # Default: container name
-  - "tsbridge.service.whois_enabled=true"    # Add identity headers
+  - "tsbridge.service.name=custom-name" # Default: container name
+  - "tsbridge.service.whois_enabled=true" # Add identity headers
   - "tsbridge.service.tags=tag:api,tag:prod" # Override default tags
-  - "tsbridge.service.oauth_preauthorized=false"  # Override global preauth setting (global default: true)
+  - "tsbridge.service.oauth_preauthorized=false" # Override global preauth setting (global default: true)
   - "tsbridge.service.listen_addr=0.0.0.0:9090" # Custom address and port
   - "tsbridge.service.insecure_skip_verify=true" # Skip TLS cert verification (HTTPS backends only)
 ```
@@ -86,6 +86,7 @@ labels:
 ## Backend Address Tips
 
 **Use port, not localhost:**
+
 ```yaml
 # Good - uses container name
 - "tsbridge.service.port=8080"
@@ -107,7 +108,7 @@ labels:
 
   # Listen on all interfaces with custom port
   - "tsbridge.service.listen_addr=0.0.0.0:8080"
-  
+
   # Listen on port only (all interfaces)
   - "tsbridge.service.listen_addr=:8443"
 ```
@@ -116,8 +117,8 @@ labels:
 
 ```yaml
 labels:
-  - "tsbridge.service.write_timeout=0s"     # No timeout
-  - "tsbridge.service.flush_interval=-1ms"  # No buffering
+  - "tsbridge.service.write_timeout=0s" # No timeout
+  - "tsbridge.service.flush_interval=-1ms" # No buffering
 ```
 
 ### Security Headers
@@ -134,7 +135,7 @@ labels:
 labels:
   # Add to requests
   - "tsbridge.service.upstream_headers.X-Service-Name=api"
-  
+
   # Remove from responses
   - "tsbridge.service.remove_downstream=Server,X-Powered-By"
 ```
@@ -147,9 +148,9 @@ For connecting to HTTPS backend services:
 labels:
   # For services with valid certificates
   - "tsbridge.service.backend_addr=https://api.example.com:443"
-  
+
   # For services with self-signed certificates (use with caution)
-  - "tsbridge.service.backend_addr=https://internal.lan:8443"  
+  - "tsbridge.service.backend_addr=https://internal.lan:8443"
   - "tsbridge.service.insecure_skip_verify=true"
 ```
 
@@ -176,7 +177,7 @@ services:
       - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
       - "tsbridge.global.metrics_addr=:9090"
     ports:
-      - "9090:9090"  # Metrics
+      - "9090:9090" # Metrics
 
   api:
     image: myapp/api:latest
@@ -205,18 +206,192 @@ networks:
   app-network:
 ```
 
-## Troubleshooting
+## Docker Networking
+
+### Network Requirements
+
+tsbridge and service containers must be on the same Docker network for communication. They don't need to be in the same compose file, but network connectivity is required.
+
+```yaml
+# tsbridge can forward traffic to service containers only if they share a network
+networks:
+  app-network:  # Same network name in both files
+
+# In tsbridge compose file
+services:
+  tsbridge:
+    networks:
+      - app-network
+
+# In service compose file
+services:
+  myservice:
+    networks:
+      - app-network
+```
+
+### Single Compose File (Simplest)
+
+When everything is in one compose file, Docker automatically creates a shared network:
+
+```yaml
+services:
+  tsbridge:
+    image: ghcr.io/jtdowney/tsbridge:latest
+    command: ["--provider", "docker"]
+    # ... other config
+
+  myapp:
+    image: myapp:latest
+    labels:
+      - "tsbridge.enabled=true"
+      - "tsbridge.service.port=8080"
+# Both containers automatically share the default network
+```
+
+### Multiple Compose Files
+
+For services in separate compose files, use external networks:
+
+**1. Create the network first:**
+
+```bash
+docker network create tsbridge-network
+```
+
+**2. tsbridge-compose.yml:**
+
+```yaml
+services:
+  tsbridge:
+    image: ghcr.io/jtdowney/tsbridge:latest
+    command: ["--provider", "docker"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
+      - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
+    labels:
+      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+    networks:
+      - tsbridge-network
+
+networks:
+  tsbridge-network:
+    external: true
+```
+
+**3. services-compose.yml:**
+
+```yaml
+services:
+  api:
+    image: myapi:latest
+    labels:
+      - "tsbridge.enabled=true"
+      - "tsbridge.service.name=api"
+      - "tsbridge.service.port=8080"
+    networks:
+      - tsbridge-network
+
+  web:
+    image: myweb:latest
+    labels:
+      - "tsbridge.enabled=true"
+      - "tsbridge.service.name=web"
+      - "tsbridge.service.port=3000"
+    networks:
+      - tsbridge-network
+
+networks:
+  tsbridge-network:
+    external: true
+```
+
+**4. Start them:**
+
+```bash
+# Start tsbridge
+docker compose -f tsbridge-compose.yml up -d
+
+# Start services (in any order)
+docker compose -f services-compose.yml up -d
+```
+
+### Alternative: Define Network in One File
+
+You can also define the network in one compose file and reference it as external in others:
+
+**tsbridge-compose.yml (defines network):**
+
+```yaml
+services:
+  tsbridge:
+    # ... config
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    name: tsbridge-shared
+```
+
+**services-compose.yml (uses external network):**
+
+```yaml
+services:
+  myapp:
+    # ... config
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true
+    name: tsbridge-shared
+```
+
+### Network Troubleshooting
+
+**Why does networking matter?**
+
+- tsbridge acts as a reverse proxy
+- It needs to reach your service containers over the network
+- `localhost` inside tsbridge container ≠ service containers
+- Docker networks enable container-to-container communication
+
+**Common networking issues:**
 
 **Service not appearing?**
+
 - Check `tsbridge.enabled=true` is set
-- Verify containers are on same network
+- Verify containers are on same network - use `docker network ls` and `docker inspect <container>`
 - Look at tsbridge logs with `--verbose`
 
 **Connection refused?**
+
 - Don't use `localhost` - use `port` label instead
 - Make sure service is listening on the port
 - Check container is actually running
+- Verify network connectivity: `docker exec tsbridge-container ping service-container`
+
+**Cross-compose networking not working?**
+
+- Ensure both compose files reference the same network name
+- Check network exists: `docker network ls`
+- Verify containers joined the network: `docker network inspect <network-name>`
+- Make sure network is external in dependent compose files
+
+## Troubleshooting
 
 **Label changes ignored?**
+
 - Labels are only read when container starts
 - Restart container to apply new labels
+
+**Cannot connect between compose files?**
+
+- Ensure both files use the same network name
+- Network must be marked as `external: true` in dependent compose files
+- Create network manually if needed: `docker network create <network-name>`

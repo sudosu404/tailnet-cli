@@ -1,0 +1,21 @@
+services:
+  # Whoami service using traefik/whoami
+  whoami:
+    image: traefik/whoami:v1.10.3
+    labels:
+      # tsbridge will automatically discover this container
+      - "tsbridge.enabled=true"
+      - "tsbridge.service.name=whoami"
+      - "tsbridge.service.port=80"
+      - "tsbridge.service.whois_enabled=true" # Add identity headers
+    networks:
+      - tsbridge-network
+
+volumes:
+  db-data:
+
+networks:
+  tsbridge-network:
+    # Reference the external network created by tsbridge-compose.yml
+    external: true
+    name: tsbridge-shared-network
