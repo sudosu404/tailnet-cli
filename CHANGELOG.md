@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow underscores in backend hostnames (#124)
   - Backend addresses can now include underscores in hostname segments
   - Improves compatibility with internal DNS naming conventions
+  - Thanks to @keonramses for reporting the issue
 
 ### Dependencies
 
