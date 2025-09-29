@@ -5,6 +5,32 @@ All notable changes to tsbridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2025-09-29
+
+### Fixed
+
+- Allow underscores in backend hostnames (#124)
+  - Backend addresses can now include underscores in hostname segments
+  - Improves compatibility with internal DNS naming conventions
+
+### Dependencies
+
+- Bump tailscale.com from 1.86.4 to 1.88.3 (#116, #118, #123)
+- Bump github.com/knadh/koanf/v2 from 2.2.2 to 2.3.0 (#117)
+- Bump github.com/docker/docker from 28.3.3 to 28.4.0 (#114)
+- Bump golang.org/x/oauth2 from 0.30.0 to 0.31.0 (#113)
+- Bump github.com/prometheus/client_golang from 1.23.0 to 1.23.2 (#112)
+- Bump github.com/stretchr/testify from 1.10.0 to 1.11.1 (#103, #106)
+
+### Development
+
+- Updated Go version to 1.25
+- Updated golangci-lint to v2.4 for Go 1.25.1 compatibility
+
+### Documentation
+
+- Added Docker networking guide and examples
+
 ## [0.12.0] - 2025-08-20
 
 ### Breaking Changes
@@ -445,6 +471,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
 
+[0.12.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.12.1
 [0.12.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.12.0
 [0.11.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.1
 [0.11.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.0
