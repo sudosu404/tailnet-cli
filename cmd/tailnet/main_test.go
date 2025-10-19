@@ -816,7 +816,7 @@ func TestParseCLIArgs(t *testing.T) {
 	}
 }
 
-// TestParseCLIArgsWithTSBRIDGEDEBUG tests that TSBRIDGE_DEBUG environment variable enables verbose mode
+// TestParseCLIArgsWithTSBRIDGEDEBUG tests that TAILNET_DEBUG environment variable enables verbose mode
 func TestParseCLIArgsWithTSBRIDGEDEBUG(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -825,25 +825,25 @@ func TestParseCLIArgsWithTSBRIDGEDEBUG(t *testing.T) {
 		wantDebug bool
 	}{
 		{
-			name:      "TSBRIDGE_DEBUG not set",
+			name:      "TAILNET_DEBUG not set",
 			args:      []string{},
 			envValue:  "",
 			wantDebug: false,
 		},
 		{
-			name:      "TSBRIDGE_DEBUG set to 1",
+			name:      "TAILNET_DEBUG set to 1",
 			args:      []string{},
 			envValue:  "1",
 			wantDebug: true,
 		},
 		{
-			name:      "TSBRIDGE_DEBUG set to any value",
+			name:      "TAILNET_DEBUG set to any value",
 			args:      []string{},
 			envValue:  "true",
 			wantDebug: true,
 		},
 		{
-			name:      "verbose flag overrides TSBRIDGE_DEBUG",
+			name:      "verbose flag overrides TAILNET_DEBUG",
 			args:      []string{"-verbose"},
 			envValue:  "",
 			wantDebug: true,
@@ -860,10 +860,10 @@ func TestParseCLIArgsWithTSBRIDGEDEBUG(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set or unset the environment variable
 			if tt.envValue != "" {
-				t.Setenv("TSBRIDGE_DEBUG", tt.envValue)
+				t.Setenv("TAILNET_DEBUG", tt.envValue)
 			} else {
 				// Ensure it's not set
-				os.Unsetenv("TSBRIDGE_DEBUG")
+				os.Unsetenv("TAILNET_DEBUG")
 			}
 
 			got, err := parseCLIArgs(tt.args)

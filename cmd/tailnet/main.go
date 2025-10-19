@@ -81,8 +81,8 @@ func parseCLIArgs(args []string) (*cliArgs, error) {
 	// Set the global flag.Usage to match
 	flag.Usage = usage
 
-	// Check TSBRIDGE_DEBUG environment variable if verbose not explicitly set
-	if !result.verbose && os.Getenv("TSBRIDGE_DEBUG") != "" {
+	// Check TAILNET_DEBUG environment variable if verbose not explicitly set
+	if !result.verbose && os.Getenv("TAILNET_DEBUG") != "" {
 		result.verbose = true
 	}
 

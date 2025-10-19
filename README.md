@@ -1,4 +1,4 @@
-# tailnet
+# Tailnet
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/sudosu404/tailnet-cli)](https://github.com/sudosu404/tailnet-cli/releases)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/sudosu404/tailnet-cli/ci.yml?branch=main)](https://github.com/sudosu404/tailnet-cli/actions)
