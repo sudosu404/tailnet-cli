@@ -1,5 +1,5 @@
 [Unit]
-Description=Tailscale Bridge Proxy Service
+Description=Tailscale Bridge Proxy Service as CLI
 Documentation=https://github.com/sudosu404/tailnet-cli
 After=network-online.target
 Wants=network-online.target
