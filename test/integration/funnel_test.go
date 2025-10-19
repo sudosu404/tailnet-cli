@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/service"
-	"github.com/jtdowney/tsbridge/internal/tailscale"
-	tsnetpkg "github.com/jtdowney/tsbridge/internal/tsnet"
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/service"
+	"github.com/sudosu404/tailnet-cli/internal/tailscale"
+	tsnetpkg "github.com/sudosu404/tailnet-cli/internal/tsnet"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

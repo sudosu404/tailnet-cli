@@ -13,21 +13,21 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParseLabelValue(t *testing.T) {
 	labels := map[string]string{
-		"tsbridge.service.name":         "api",
-		"tsbridge.service.backend_addr": "localhost:8080",
+		"tailnet.service.name":         "api",
+		"tailnet.service.backend_addr": "localhost:8080",
 		"other.label":                   "ignored",
 	}
 
-	parser := newLabelParser(labels, "tsbridge")
+	parser := newLabelParser(labels, "tailnet")
 	assert.Equal(t, "api", parser.getString("service.name"))
 	assert.Equal(t, "localhost:8080", parser.getString("service.backend_addr"))
 	assert.Equal(t, "", parser.getString("nonexistent"))
@@ -35,13 +35,13 @@ func TestParseLabelValue(t *testing.T) {
 
 func TestParseHeaders(t *testing.T) {
 	labels := map[string]string{
-		"tsbridge.service.upstream_headers.X-Custom-Header": "value1",
-		"tsbridge.service.upstream_headers.X-Another":       "value2",
-		"tsbridge.service.downstream_headers.X-Response":    "value3",
+		"tailnet.service.upstream_headers.X-Custom-Header": "value1",
+		"tailnet.service.upstream_headers.X-Another":       "value2",
+		"tailnet.service.downstream_headers.X-Response":    "value3",
 		"other.label": "ignored",
 	}
 
-	parser := newLabelParser(labels, "tsbridge")
+	parser := newLabelParser(labels, "tailnet")
 	upstreamHeaders := parser.getHeaders("service.upstream_headers")
 	assert.Equal(t, 2, len(upstreamHeaders))
 	assert.Equal(t, "value1", upstreamHeaders["X-Custom-Header"])
@@ -53,7 +53,7 @@ func TestParseHeaders(t *testing.T) {
 }
 
 func TestParseServiceConfig(t *testing.T) {
-	provider := &Provider{labelPrefix: "tsbridge"}
+	provider := &Provider{labelPrefix: "tailnet"}
 
 	tests := []struct {
 		name      string
@@ -66,9 +66,9 @@ func TestParseServiceConfig(t *testing.T) {
 			container: container.Summary{
 				Names: []string{"/test-api"},
 				Labels: map[string]string{
-					"tsbridge.enabled":              "true",
-					"tsbridge.service.name":         "api",
-					"tsbridge.service.backend_addr": "localhost:8080",
+					"tailnet.enabled":              "true",
+					"tailnet.service.name":         "api",
+					"tailnet.service.backend_addr": "localhost:8080",
 				},
 			},
 			validate: func(t *testing.T, svc *config.Service) {
@@ -81,18 +81,18 @@ func TestParseServiceConfig(t *testing.T) {
 			container: container.Summary{
 				Names: []string{"/test-web"},
 				Labels: map[string]string{
-					"tsbridge.enabled":                           "true",
-					"tsbridge.service.name":                      "web",
-					"tsbridge.service.backend_addr":              "unix:///var/run/web.sock",
-					"tsbridge.service.whois_enabled":             "true",
-					"tsbridge.service.whois_timeout":             "2s",
-					"tsbridge.service.tls_mode":                  "off",
-					"tsbridge.service.access_log":                "false",
-					"tsbridge.service.funnel_enabled":            "true",
-					"tsbridge.service.ephemeral":                 "true",
-					"tsbridge.service.upstream_headers.X-Custom": "value",
-					"tsbridge.service.remove_upstream":           "X-Forwarded-For,X-Real-IP",
-					"tsbridge.service.flush_interval":            "-1ms",
+					"tailnet.enabled":                           "true",
+					"tailnet.service.name":                      "web",
+					"tailnet.service.backend_addr":              "unix:///var/run/web.sock",
+					"tailnet.service.whois_enabled":             "true",
+					"tailnet.service.whois_timeout":             "2s",
+					"tailnet.service.tls_mode":                  "off",
+					"tailnet.service.access_log":                "false",
+					"tailnet.service.funnel_enabled":            "true",
+					"tailnet.service.ephemeral":                 "true",
+					"tailnet.service.upstream_headers.X-Custom": "value",
+					"tailnet.service.remove_upstream":           "X-Forwarded-For,X-Real-IP",
+					"tailnet.service.flush_interval":            "-1ms",
 				},
 			},
 			validate: func(t *testing.T, svc *config.Service) {
@@ -114,8 +114,8 @@ func TestParseServiceConfig(t *testing.T) {
 			container: container.Summary{
 				Names: []string{"/test-app"},
 				Labels: map[string]string{
-					"tsbridge.enabled":      "true",
-					"tsbridge.service.port": "3000",
+					"tailnet.enabled":      "true",
+					"tailnet.service.port": "3000",
 				},
 				Ports: []container.Port{
 					{PrivatePort: 3000, PublicPort: 0},
@@ -131,8 +131,8 @@ func TestParseServiceConfig(t *testing.T) {
 			container: container.Summary{
 				Names: []string{"/test-fail"},
 				Labels: map[string]string{
-					"tsbridge.enabled":      "true",
-					"tsbridge.service.name": "fail",
+					"tailnet.enabled":      "true",
+					"tailnet.service.name": "fail",
 				},
 			},
 			wantErr: true,
@@ -156,7 +156,7 @@ func TestParseServiceConfig(t *testing.T) {
 }
 
 func TestParseGlobalConfig(t *testing.T) {
-	provider := &Provider{labelPrefix: "tsbridge"}
+	provider := &Provider{labelPrefix: "tailnet"}
 
 	t.Run("with explicit env vars in labels", func(t *testing.T) {
 		// Set environment variables for testing
@@ -165,17 +165,17 @@ func TestParseGlobalConfig(t *testing.T) {
 
 		container := &container.Summary{
 			Labels: map[string]string{
-				"tsbridge.tailscale.oauth_client_id_env":     "TS_OAUTH_CLIENT_ID",
-				"tsbridge.tailscale.oauth_client_secret_env": "TS_OAUTH_CLIENT_SECRET",
-				"tsbridge.tailscale.state_dir":               "/var/lib/tsbridge",
-				"tsbridge.tailscale.default_tags":            "tag:proxy,tag:server",
-				"tsbridge.global.metrics_addr":               ":9090",
-				"tsbridge.global.read_header_timeout":        "30s",
-				"tsbridge.global.write_timeout":              "30s",
-				"tsbridge.global.idle_timeout":               "120s",
-				"tsbridge.global.access_log":                 "true",
-				"tsbridge.global.trusted_proxies":            "10.0.0.0/8,172.16.0.0/12",
-				"tsbridge.global.flush_interval":             "10s",
+				"tailnet.tailscale.oauth_client_id_env":     "TS_OAUTH_CLIENT_ID",
+				"tailnet.tailscale.oauth_client_secret_env": "TS_OAUTH_CLIENT_SECRET",
+				"tailnet.tailscale.state_dir":               "/var/lib/tailnet",
+				"tailnet.tailscale.default_tags":            "tag:proxy,tag:server",
+				"tailnet.global.metrics_addr":               ":9090",
+				"tailnet.global.read_header_timeout":        "30s",
+				"tailnet.global.write_timeout":              "30s",
+				"tailnet.global.idle_timeout":               "120s",
+				"tailnet.global.access_log":                 "true",
+				"tailnet.global.trusted_proxies":            "10.0.0.0/8,172.16.0.0/12",
+				"tailnet.global.flush_interval":             "10s",
 			},
 		}
 
@@ -188,7 +188,7 @@ func TestParseGlobalConfig(t *testing.T) {
 		assert.Equal(t, "", cfg.Tailscale.OAuthClientSecret.Value())
 		assert.Equal(t, "TS_OAUTH_CLIENT_ID", cfg.Tailscale.OAuthClientIDEnv)
 		assert.Equal(t, "TS_OAUTH_CLIENT_SECRET", cfg.Tailscale.OAuthClientSecretEnv)
-		assert.Equal(t, "/var/lib/tsbridge", cfg.Tailscale.StateDir)
+		assert.Equal(t, "/var/lib/tailnet", cfg.Tailscale.StateDir)
 		assert.Equal(t, []string{"tag:proxy", "tag:server"}, cfg.Tailscale.DefaultTags)
 
 		// Verify global config
@@ -209,8 +209,8 @@ func TestParseGlobalConfig(t *testing.T) {
 		container := &container.Summary{
 			Labels: map[string]string{
 				// No oauth env labels - should fallback to standard env vars
-				"tsbridge.tailscale.state_dir": "/var/lib/tsbridge",
-				"tsbridge.global.metrics_addr": ":9090",
+				"tailnet.tailscale.state_dir": "/var/lib/tailnet",
+				"tailnet.global.metrics_addr": ":9090",
 			},
 		}
 
@@ -223,7 +223,7 @@ func TestParseGlobalConfig(t *testing.T) {
 		assert.Equal(t, "", cfg.Tailscale.OAuthClientSecret.Value())
 		assert.Equal(t, "", cfg.Tailscale.OAuthClientIDEnv)
 		assert.Equal(t, "", cfg.Tailscale.OAuthClientSecretEnv)
-		assert.Equal(t, "/var/lib/tsbridge", cfg.Tailscale.StateDir)
+		assert.Equal(t, "/var/lib/tailnet", cfg.Tailscale.StateDir)
 		assert.Equal(t, ":9090", cfg.Global.MetricsAddr)
 	})
 }
@@ -454,8 +454,8 @@ func TestDockerLabelParsingErrors(t *testing.T) {
 				ID:    "test-container",
 				Names: []string{},
 				Labels: map[string]string{
-					"tsbridge.enabled": "true",
-					// No tsbridge.name label
+					"tailnet.enabled": "true",
+					// No tailnet.name label
 				},
 			},
 			wantErr:      true,
@@ -468,8 +468,8 @@ func TestDockerLabelParsingErrors(t *testing.T) {
 				ID:    "test-container",
 				Names: []string{"/test-service"},
 				Labels: map[string]string{
-					"tsbridge.enabled": "true",
-					"tsbridge.name":    "test-service",
+					"tailnet.enabled": "true",
+					"tailnet.name":    "test-service",
 					// No backend address labels
 				},
 			},
@@ -480,7 +480,7 @@ func TestDockerLabelParsingErrors(t *testing.T) {
 	}
 
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	for _, tt := range tests {
@@ -530,7 +530,7 @@ func TestRaceConditionFixed(t *testing.T) {
 	// This test verifies there's no race condition when using getLastConfig
 
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 		lastConfig: &config.Config{
 			Services: []config.Service{
 				{Name: "test", BackendAddr: "localhost:8080"},
@@ -741,7 +741,7 @@ func TestDockerProvider_WatchWithEvents(t *testing.T) {
 	t.Run("watch method signature", func(t *testing.T) {
 		// Test that the Watch method signature hasn't changed
 		provider := &Provider{
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		// Test signature without calling - this verifies method exists
@@ -752,7 +752,7 @@ func TestDockerProvider_WatchWithEvents(t *testing.T) {
 	t.Run("createEventOptions configuration", func(t *testing.T) {
 		// Test the event options creation without requiring Docker client
 		provider := &Provider{
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		options := provider.createEventOptions()
@@ -779,11 +779,11 @@ func TestDockerProvider_WatchWithEvents(t *testing.T) {
 		// Verify that the Watch method would use proper event filters
 		// This is a unit test that doesn't require actual Docker connection
 		provider := &Provider{
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		// Test that the provider has the correct label prefix
-		assert.Equal(t, "tsbridge", provider.labelPrefix)
+		assert.Equal(t, "tailnet", provider.labelPrefix)
 
 		// The actual event filtering is tested in integration tests
 		// where we can verify the filters are applied correctly
@@ -808,7 +808,7 @@ func TestDockerProvider_BackoffBehavior(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -823,7 +823,7 @@ func TestDockerProvider_BackoffBehavior(t *testing.T) {
 			Actor: events.Actor{
 				ID: "test123",
 				Attributes: map[string]string{
-					"tsbridge.enabled": "true",
+					"tailnet.enabled": "true",
 				},
 			},
 		}
@@ -859,7 +859,7 @@ func TestDockerProvider_BackoffBehavior(t *testing.T) {
 		mockClient := newMockDockerClient()
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -891,9 +891,9 @@ func (t *testEventStreamClient) ContainerList(ctx context.Context, options conta
 	return []container.Summary{
 		{
 			ID:    "tsbridge123",
-			Names: []string{"/tsbridge"},
+			Names: []string{"/tailnet"},
 			Labels: map[string]string{
-				"tsbridge.name": "tsbridge",
+				"tailnet.name": "tailnet",
 			},
 			State: "running",
 		},
@@ -1084,19 +1084,19 @@ func createTestContainer(id, name string, labels map[string]string) container.Su
 	}
 }
 
-// Helper function to create tsbridge self container
+// Helper function to create tailnet self container
 func createTsbridgeContainer(id string) container.Summary {
-	// Note: tsbridge self container should NOT have tsbridge.enabled=true
+	// Note: tailnet self container should NOT have tailnet.enabled=true
 	// as it's not a service container
 	labels := map[string]string{
-		"tsbridge.tailscale.oauth_client_id":     "tskey-123",
-		"tsbridge.tailscale.oauth_client_secret": "secret-456",
-		"tsbridge.tailscale.hostname":            "test-bridge",
-		"tsbridge.tailscale.default_tags":        "tag:test,tag:docker",
+		"tailnet.tailscale.oauth_client_id":     "tskey-123",
+		"tailnet.tailscale.oauth_client_secret": "secret-456",
+		"tailnet.tailscale.hostname":            "test-bridge",
+		"tailnet.tailscale.default_tags":        "tag:test,tag:docker",
 	}
 	return container.Summary{
 		ID:     id,
-		Names:  []string{"/" + "tsbridge"},
+		Names:  []string{"/" + "tailnet"},
 		Labels: labels,
 		State:  "running",
 	}
@@ -1105,9 +1105,9 @@ func createTsbridgeContainer(id string) container.Summary {
 // Helper function to create service container
 func createServiceContainer(id, name, backendAddr string) container.Summary {
 	return createTestContainer(id, name, map[string]string{
-		"tsbridge.enabled":              "true",
-		"tsbridge.service.name":         name,
-		"tsbridge.service.backend_addr": backendAddr,
+		"tailnet.enabled":              "true",
+		"tailnet.service.name":         name,
+		"tailnet.service.backend_addr": backendAddr,
 	})
 }
 
@@ -1124,7 +1124,7 @@ func TestProvider_Load(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1152,22 +1152,22 @@ func TestProvider_Load(t *testing.T) {
 		defer func() { readFile = oldReadFile }()
 
 		mockClient := newMockDockerClient()
-		// No tsbridge container in list - only service containers
+		// No tailnet container in list - only service containers
 		mockClient.containers = []container.Summary{
 			createServiceContainer("svc1", "api", "localhost:8080"),
 		}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
 		_, err := provider.Load(ctx)
 
 		assert.Error(t, err)
-		// Now properly returns error about missing tsbridge container
-		assert.Contains(t, err.Error(), "unable to find tsbridge container")
+		// Now properly returns error about missing tailnet container
+		assert.Contains(t, err.Error(), "unable to find tailnet container")
 	})
 
 	t.Run("docker api error", func(t *testing.T) {
@@ -1176,26 +1176,26 @@ func TestProvider_Load(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
 		_, err := provider.Load(ctx)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "finding tsbridge container")
+		assert.Contains(t, err.Error(), "finding tailnet container")
 	})
 
 	t.Run("no service containers", func(t *testing.T) {
 		mockClient := newMockDockerClient()
 
-		// Only tsbridge container, no services
+		// Only tailnet container, no services
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		mockClient.containers = []container.Summary{tsbridgeContainer}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1213,15 +1213,15 @@ func TestProvider_Load(t *testing.T) {
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		enabledService := createServiceContainer("svc1", "api", "localhost:8080")
 		disabledService := createTestContainer("svc2", "disabled", map[string]string{
-			"tsbridge.enabled":      "false",
-			"tsbridge.service.name": "disabled",
+			"tailnet.enabled":      "false",
+			"tailnet.service.name": "disabled",
 		})
 
 		mockClient.containers = []container.Summary{tsbridgeContainer, enabledService, disabledService}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1241,16 +1241,16 @@ func TestProvider_Load(t *testing.T) {
 		enabledService := createServiceContainer("svc1", "api", "localhost:8080")
 		// Service with "enable" label (without 'd')
 		enableService := createTestContainer("svc2", "web", map[string]string{
-			"tsbridge.enable":               "true", // Note: "enable" not "enabled"
-			"tsbridge.service.name":         "web",
-			"tsbridge.service.backend_addr": "localhost:3000",
+			"tailnet.enable":               "true", // Note: "enable" not "enabled"
+			"tailnet.service.name":         "web",
+			"tailnet.service.backend_addr": "localhost:3000",
 		})
 
 		mockClient.containers = []container.Summary{tsbridgeContainer, enabledService, enableService}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1275,17 +1275,17 @@ func TestProvider_Load(t *testing.T) {
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		// Service with BOTH "enable" and "enabled" labels
 		dualLabelService := createTestContainer("svc1", "api", map[string]string{
-			"tsbridge.enable":               "true", // Both labels set
-			"tsbridge.enabled":              "true", // Both labels set
-			"tsbridge.service.name":         "api",
-			"tsbridge.service.backend_addr": "localhost:8080",
+			"tailnet.enable":               "true", // Both labels set
+			"tailnet.enabled":              "true", // Both labels set
+			"tailnet.service.name":         "api",
+			"tailnet.service.backend_addr": "localhost:8080",
 		})
 
 		mockClient.containers = []container.Summary{tsbridgeContainer, dualLabelService}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1303,7 +1303,7 @@ func TestProvider_Load(t *testing.T) {
 
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		badService := createTestContainer("svc1", "bad", map[string]string{
-			"tsbridge.enabled": "true",
+			"tailnet.enabled": "true",
 			// Missing required service.name and backend_addr
 		})
 		goodService := createServiceContainer("svc2", "good", "localhost:8080")
@@ -1312,7 +1312,7 @@ func TestProvider_Load(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx := context.Background()
@@ -1330,13 +1330,13 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 	t.Run("container start event triggers config reload", func(t *testing.T) {
 		mockClient := newMockDockerClient()
 
-		// Initial state: only tsbridge container
+		// Initial state: only tailnet container
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		mockClient.containers = []container.Summary{tsbridgeContainer}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		// Load initial config to set lastConfig
@@ -1366,7 +1366,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 				ID: "svc1",
 				Attributes: map[string]string{
 					"name":             "api",
-					"tsbridge.enabled": "true",
+					"tailnet.enabled": "true",
 				},
 			},
 		}
@@ -1389,14 +1389,14 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 	t.Run("container stop event triggers config reload", func(t *testing.T) {
 		mockClient := newMockDockerClient()
 
-		// Initial state: tsbridge + service container
+		// Initial state: tailnet + service container
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		serviceContainer := createServiceContainer("svc1", "api", "localhost:8080")
 		mockClient.containers = []container.Summary{tsbridgeContainer, serviceContainer}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		// Load initial config to set lastConfig
@@ -1424,7 +1424,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 				ID: "svc1",
 				Attributes: map[string]string{
 					"name":             "api",
-					"tsbridge.enabled": "true",
+					"tailnet.enabled": "true",
 				},
 			},
 		}
@@ -1449,7 +1449,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -1488,7 +1488,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -1519,7 +1519,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -1557,7 +1557,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -1581,7 +1581,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 				ID: "svc1",
 				Attributes: map[string]string{
 					"name":             "api",
-					"tsbridge.enabled": "true",
+					"tailnet.enabled": "true",
 				},
 			},
 		}
@@ -1600,13 +1600,13 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 	t.Run("lastConfig is updated after config change notification", func(t *testing.T) {
 		mockClient := newMockDockerClient()
 
-		// Initial state: only tsbridge container
+		// Initial state: only tailnet container
 		tsbridgeContainer := createTsbridgeContainer("tsbridge123")
 		mockClient.containers = []container.Summary{tsbridgeContainer}
 
 		provider := &Provider{
 			client:      mockClient,
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		// Load initial config
@@ -1642,7 +1642,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 				ID: "svc1",
 				Attributes: map[string]string{
 					"name":             "api",
-					"tsbridge.enabled": "true",
+					"tailnet.enabled": "true",
 				},
 			},
 		}
@@ -1674,7 +1674,7 @@ func TestProvider_Watch_Enhanced(t *testing.T) {
 }
 
 func TestProvider_isContainerEnabled(t *testing.T) {
-	provider := &Provider{labelPrefix: "tsbridge"}
+	provider := &Provider{labelPrefix: "tailnet"}
 
 	tests := []struct {
 		name     string
@@ -1683,27 +1683,27 @@ func TestProvider_isContainerEnabled(t *testing.T) {
 	}{
 		{
 			name:     "enabled label true",
-			labels:   map[string]string{"tsbridge.enabled": "true"},
+			labels:   map[string]string{"tailnet.enabled": "true"},
 			expected: true,
 		},
 		{
 			name:     "enable label true",
-			labels:   map[string]string{"tsbridge.enable": "true"},
+			labels:   map[string]string{"tailnet.enable": "true"},
 			expected: true,
 		},
 		{
 			name:     "both labels true",
-			labels:   map[string]string{"tsbridge.enabled": "true", "tsbridge.enable": "true"},
+			labels:   map[string]string{"tailnet.enabled": "true", "tailnet.enable": "true"},
 			expected: true,
 		},
 		{
 			name:     "enabled label false",
-			labels:   map[string]string{"tsbridge.enabled": "false"},
+			labels:   map[string]string{"tailnet.enabled": "false"},
 			expected: false,
 		},
 		{
 			name:     "enable label false",
-			labels:   map[string]string{"tsbridge.enable": "false"},
+			labels:   map[string]string{"tailnet.enable": "false"},
 			expected: false,
 		},
 		{
@@ -1734,7 +1734,7 @@ func TestProvider_isContainerEnabled(t *testing.T) {
 func TestProvider_SimpleMethods(t *testing.T) {
 	t.Run("Name returns correct provider name", func(t *testing.T) {
 		provider := &Provider{
-			labelPrefix: "tsbridge",
+			labelPrefix: "tailnet",
 		}
 
 		assert.Equal(t, "docker", provider.Name())
@@ -1865,7 +1865,7 @@ func TestProvider_ConfigEqual(t *testing.T) {
 }
 
 func TestRemoveServiceByContainerName(t *testing.T) {
-	p := &Provider{labelPrefix: "tsbridge"}
+	p := &Provider{labelPrefix: "tailnet"}
 
 	tests := []struct {
 		name              string
@@ -2024,7 +2024,7 @@ func TestDockerRaceConditionHandling(t *testing.T) {
 	// even if Docker's API briefly returns the container as "running"
 
 	t.Run("stop event removes service from config", func(t *testing.T) {
-		p := &Provider{labelPrefix: "tsbridge"}
+		p := &Provider{labelPrefix: "tailnet"}
 
 		// Simulate a config that includes a container that's being stopped
 		cfg := &config.Config{
@@ -2186,7 +2186,7 @@ func TestWatchLoopStreamEstablished(t *testing.T) {
 	mockClient := &MockFailingDockerClient{}
 	p := &Provider{
 		client:      mockClient,
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
@@ -2209,7 +2209,7 @@ func TestWatchLoopStreamEstablished(t *testing.T) {
 		} else {
 			// Second attempt sends events to establish stream
 			go func() {
-				// Send a tsbridge-enabled container event
+				// Send a tailnet-enabled container event
 				select {
 				case <-ctx.Done():
 					return
@@ -2220,7 +2220,7 @@ func TestWatchLoopStreamEstablished(t *testing.T) {
 						ID: "test123",
 						Attributes: map[string]string{
 							"name":             "test-container",
-							"tsbridge.enabled": "true",
+							"tailnet.enabled": "true",
 						},
 					},
 				}:
@@ -2281,7 +2281,7 @@ func TestDebouncedReload(t *testing.T) {
 	// by checking that multiple rapid calls result in only one timer execution
 
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	// Track how many times the timer fires
@@ -2491,11 +2491,11 @@ func TestGetContainerByID(t *testing.T) {
 		},
 		{
 			name:     "hostname as container name",
-			targetID: "tsbridge-host",
+			targetID: "tailnet-host",
 			containers: []container.Summary{
 				{
 					ID:    "abc123def456",
-					Names: []string{"/tsbridge-host"},
+					Names: []string{"/tailnet-host"},
 				},
 			},
 			expectFound: true,
@@ -2510,7 +2510,7 @@ func TestGetContainerByID(t *testing.T) {
 
 			provider := &Provider{
 				client:      mockClient,
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 			}
 
 			ctx := context.Background()

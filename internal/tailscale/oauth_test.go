@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"

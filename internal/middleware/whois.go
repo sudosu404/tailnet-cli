@@ -14,8 +14,8 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	"github.com/jtdowney/tsbridge/internal/constants"
-	tserrors "github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	tserrors "github.com/sudosu404/tailnet-cli/internal/errors"
 	"tailscale.com/client/tailscale/apitype"
 )
 

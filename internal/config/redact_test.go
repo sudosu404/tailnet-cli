@@ -73,7 +73,7 @@ func TestRedactedConfig(t *testing.T) {
 			OAuthClientID:     "client-id",
 			OAuthClientSecret: "super-secret",
 			AuthKey:           "tskey-auth-xxx",
-			StateDir:          "/var/lib/tsbridge",
+			StateDir:          "/var/lib/tailnet",
 		},
 		Services: []Service{
 			{
@@ -190,7 +190,7 @@ func TestTailscaleWithRedactedString(t *testing.T) {
 		OAuthClientID:     "client-id-123",
 		OAuthClientSecret: RedactedString("secret-value-456"),
 		AuthKey:           RedactedString("tskey-auth-789"),
-		StateDir:          "/var/lib/tsbridge",
+		StateDir:          "/var/lib/tailnet",
 	}
 
 	// Test string representation

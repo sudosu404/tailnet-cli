@@ -1,4 +1,4 @@
-// Package docker provides Docker label-based configuration for tsbridge.
+// Package docker provides Docker label-based configuration for tailnet.
 package docker
 
 import (
@@ -15,9 +15,9 @@ import (
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 )
 
 // DockerClient defines the methods required from a Docker client to be used by the provider
@@ -29,8 +29,8 @@ type DockerClient interface {
 }
 
 const (
-	// DefaultLabelPrefix is the default label prefix for tsbridge configuration
-	DefaultLabelPrefix = "tsbridge"
+	// DefaultLabelPrefix is the default label prefix for tailnet configuration
+	DefaultLabelPrefix = "tailnet"
 
 	// DefaultDockerEndpoint is the default Docker socket endpoint
 	DefaultDockerEndpoint = "unix:///var/run/docker.sock"
@@ -51,7 +51,7 @@ type Provider struct {
 type Options struct {
 	// DockerEndpoint is the Docker socket endpoint (default: unix:///var/run/docker.sock)
 	DockerEndpoint string
-	// LabelPrefix is the prefix for tsbridge labels (default: tsbridge)
+	// LabelPrefix is the prefix for tailnet labels (default: tailnet)
 	LabelPrefix string
 }
 
@@ -150,19 +150,19 @@ func (p *Provider) Load(ctx context.Context) (*config.Config, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	// Find tsbridge container to get global configuration
+	// Find tailnet container to get global configuration
 	selfContainer, err := p.findSelfContainer(ctx)
 	if err != nil {
-		return nil, errors.WrapProviderError(err, "docker", errors.ErrTypeResource, "finding tsbridge container")
+		return nil, errors.WrapProviderError(err, "docker", errors.ErrTypeResource, "finding tailnet container")
 	}
 
-	// Parse global configuration from tsbridge container labels
+	// Parse global configuration from tailnet container labels
 	cfg := &config.Config{}
 	if err := p.parseGlobalConfig(selfContainer, cfg); err != nil {
 		return nil, errors.WrapProviderError(err, "docker", errors.ErrTypeConfig, "parsing global configuration")
 	}
 
-	// Find all containers with tsbridge.enabled=true
+	// Find all containers with tailnet.enabled=true
 	serviceContainers, err := p.findServiceContainers(ctx)
 	if err != nil {
 		return nil, errors.WrapProviderError(err, "docker", errors.ErrTypeResource, "finding service containers")
@@ -310,7 +310,7 @@ func (p *Provider) handleContainerEvent(ctx context.Context, configCh chan<- *co
 		return false
 	}
 
-	// Check if this container has tsbridge enabled (either "enabled" or "enable" label)
+	// Check if this container has tailnet enabled (either "enabled" or "enable" label)
 	enabledLabel := fmt.Sprintf("%s.enabled", p.labelPrefix)
 	enableLabel := fmt.Sprintf("%s.enable", p.labelPrefix)
 
@@ -319,7 +319,7 @@ func (p *Provider) handleContainerEvent(ctx context.Context, configCh chan<- *co
 		event.Actor.Attributes[enableLabel] == "true"
 
 	if !isEnabled {
-		// Not a tsbridge-enabled container, ignore this event
+		// Not a tailnet-enabled container, ignore this event
 		return false
 	}
 
@@ -463,7 +463,7 @@ func (p *Provider) getLastConfig() *config.Config {
 	return p.lastConfig
 }
 
-// findSelfContainer finds the tsbridge container itself
+// findSelfContainer finds the tailnet container itself
 func (p *Provider) findSelfContainer(ctx context.Context) (*container.Summary, error) {
 	// First try to find by hostname (which is the container ID in Docker)
 	hostname, err := p.getHostname()
@@ -480,7 +480,7 @@ func (p *Provider) findSelfContainer(ctx context.Context) (*container.Summary, e
 		slog.Debug("failed to get hostname", "error", err)
 	}
 
-	// Fallback: find container with tsbridge labels
+	// Fallback: find container with tailnet labels
 	opts := container.ListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", fmt.Sprintf("%s.tailscale.oauth_client_id", p.labelPrefix)),
@@ -493,14 +493,14 @@ func (p *Provider) findSelfContainer(ctx context.Context) (*container.Summary, e
 	}
 
 	if len(containers) == 0 {
-		return nil, errors.NewValidationError("unable to find tsbridge container")
+		return nil, errors.NewValidationError("unable to find tailnet container")
 	}
 
 	// Return the first one (there should only be one)
 	return &containers[0], nil
 }
 
-// findServiceContainers finds all containers with tsbridge.enabled=true or tsbridge.enable=true
+// findServiceContainers finds all containers with tailnet.enabled=true or tailnet.enable=true
 func (p *Provider) findServiceContainers(ctx context.Context) ([]container.Summary, error) {
 	// Query for containers with enabled=true
 	enabledLabel := fmt.Sprintf("%s.enabled=true", p.labelPrefix)

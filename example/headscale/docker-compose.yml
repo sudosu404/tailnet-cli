@@ -10,7 +10,7 @@ services:
       - "9090:9090" # Metrics
     command: serve
     networks:
-      - tsbridge-demo
+      - tailnet-demo
 
   # Backend API service
   api-backend:
@@ -23,13 +23,13 @@ services:
     ports:
       - "8082:8082"
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=demo-api"
-      - "tsbridge.service.port=8082"
-      - "tsbridge.service.tls_mode=off"
-      - "tsbridge.service.whois_enabled=true"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=demo-api"
+      - "tailnet.service.port=8082"
+      - "tailnet.service.tls_mode=off"
+      - "tailnet.service.whois_enabled=true"
 
   # Backend Web service
   web-backend:
@@ -42,37 +42,37 @@ services:
     ports:
       - "8083:8083"
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=demo-web"
-      - "tsbridge.service.port=8083"
-      - "tsbridge.service.tls_mode=off"
-      - "tsbridge.service.whois_enabled=true"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=demo-web"
+      - "tailnet.service.port=8083"
+      - "tailnet.service.tls_mode=off"
+      - "tailnet.service.whois_enabled=true"
 
-  # tsbridge proxy with Headscale
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  # tailnet proxy with Headscale
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - tsbridge-state:/var/lib/tsbridge
+      - tailnet-state:/var/lib/tailnet
     environment:
       # When using Headscale, we'll use auth keys instead of OAuth
       - TS_AUTHKEY=${TS_AUTHKEY}
     command: ["--provider", "docker", "--verbose"]
     labels:
       # Tailscale configuration
-      - "tsbridge.tailscale.control_url=http://headscale:8080"
-      - "tsbridge.tailscale.auth_key_env=TS_AUTHKEY"
-      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
+      - "tailnet.tailscale.control_url=http://headscale:8080"
+      - "tailnet.tailscale.auth_key_env=TS_AUTHKEY"
+      - "tailnet.tailscale.state_dir=/var/lib/tailnet"
     depends_on:
       - headscale
     networks:
-      - tsbridge-demo
+      - tailnet-demo
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
   headscale-data:
 
 networks:
-  tsbridge-demo:
+  tailnet-demo:

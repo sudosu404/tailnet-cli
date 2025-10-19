@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	tsnetpkg "github.com/jtdowney/tsbridge/internal/tsnet"
+	tsnetpkg "github.com/sudosu404/tailnet-cli/internal/tsnet"
 	"tailscale.com/client/tailscale/apitype"
 )
 

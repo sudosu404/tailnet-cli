@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/service"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/service"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 )
 
 func TestServiceWithHeaderConfiguration(t *testing.T) {
@@ -48,7 +48,7 @@ func TestServiceWithHeaderConfiguration(t *testing.T) {
 				Name:        "test-service",
 				BackendAddr: backend.URL,
 				UpstreamHeaders: map[string]string{
-					"X-Service-Name": "tsbridge",
+					"X-Service-Name": "tailnet",
 					"X-Request-ID":   "test-123",
 				},
 			},
@@ -56,7 +56,7 @@ func TestServiceWithHeaderConfiguration(t *testing.T) {
 				"User-Agent": "test-client",
 			},
 			expectedReqEcho: map[string]string{
-				"X-Echo-X-Service-Name": "tsbridge",
+				"X-Echo-X-Service-Name": "tailnet",
 				"X-Echo-X-Request-ID":   "test-123",
 				"X-Echo-User-Agent":     "test-client",
 			},
@@ -90,12 +90,12 @@ func TestServiceWithHeaderConfiguration(t *testing.T) {
 				Name:        "test-service",
 				BackendAddr: backend.URL,
 				DownstreamHeaders: map[string]string{
-					"X-Powered-By":    "tsbridge",
+					"X-Powered-By":    "tailnet",
 					"X-Cache-Control": "no-cache",
 				},
 			},
 			expectedRespHeaders: map[string]string{
-				"X-Powered-By":      "tsbridge",
+				"X-Powered-By":      "tailnet",
 				"X-Cache-Control":   "no-cache",
 				"X-Backend-Version": "1.0",
 			},
@@ -118,7 +118,7 @@ func TestServiceWithHeaderConfiguration(t *testing.T) {
 				Name:        "test-service",
 				BackendAddr: backend.URL,
 				UpstreamHeaders: map[string]string{
-					"X-Service": "tsbridge",
+					"X-Service": "tailnet",
 				},
 				RemoveUpstream: []string{"Authorization"},
 				DownstreamHeaders: map[string]string{
@@ -131,7 +131,7 @@ func TestServiceWithHeaderConfiguration(t *testing.T) {
 				"Accept":        "application/json",
 			},
 			expectedReqEcho: map[string]string{
-				"X-Echo-X-Service": "tsbridge",
+				"X-Echo-X-Service": "tailnet",
 				"X-Echo-Accept":    "application/json",
 			},
 			expectedRespHeaders: map[string]string{

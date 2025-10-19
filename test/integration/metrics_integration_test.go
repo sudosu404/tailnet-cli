@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +37,7 @@ func TestE2EMetricsCollection(t *testing.T) {
 	})
 	configPath := helpers.WriteConfigFile(t, cfg)
 
-	// Start tsbridge process
+	// Start tailnet process
 	process := helpers.StartTSBridge(t, configPath)
 
 	// Get the output (this will trigger shutdown)
@@ -80,7 +80,7 @@ func TestMetricsEndpointWithRealServer(t *testing.T) {
 	configPath := helpers.WriteConfigFile(t, cfg)
 	binPath := helpers.BuildTestBinary(t)
 
-	// Start tsbridge with specific metrics port
+	// Start tailnet with specific metrics port
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -89,7 +89,7 @@ func TestMetricsEndpointWithRealServer(t *testing.T) {
 
 	// Start in background
 	err := cmd.Start()
-	require.NoError(t, err, "failed to start tsbridge")
+	require.NoError(t, err, "failed to start tailnet")
 
 	// Wait for service to be ready
 	time.Sleep(2 * time.Second)
@@ -124,9 +124,9 @@ func TestMetricsEndpointWithRealServer(t *testing.T) {
 	assert.Contains(t, metricsStr, "# HELP", "metrics response doesn't contain Prometheus help text")
 
 	// In test mode, verify we at least get some metrics
-	// The custom tsbridge metrics may not be initialized
+	// The custom tailnet metrics may not be initialized
 	if strings.Contains(metricsStr, "tsbridge_") {
-		// If we have tsbridge metrics, verify them
+		// If we have tailnet metrics, verify them
 		expectedMetrics := []string{
 			"tsbridge_requests_total",
 			"tsbridge_request_duration_seconds",
@@ -142,13 +142,13 @@ func TestMetricsEndpointWithRealServer(t *testing.T) {
 		}
 
 		if foundCount == 0 {
-			t.Log("Warning: No tsbridge metrics found, this might be expected in test mode")
+			t.Log("Warning: No tailnet metrics found, this might be expected in test mode")
 		} else if foundCount < len(expectedMetrics) {
 			t.Logf("Found %d/%d expected metrics", foundCount, len(expectedMetrics))
 		}
 	} else {
 		// In test mode, just verify we get valid Prometheus output
-		t.Log("Note: tsbridge metrics not found, verifying basic Prometheus format")
+		t.Log("Note: tailnet metrics not found, verifying basic Prometheus format")
 
 		// Should at least have Go runtime metrics
 		assert.Contains(t, metricsStr, "go_", "expected Go runtime metrics in response")

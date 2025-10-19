@@ -1,4 +1,4 @@
-// Package config handles configuration parsing and validation for tsbridge.
+// Package config handles configuration parsing and validation for tailnet.
 package config
 
 import (

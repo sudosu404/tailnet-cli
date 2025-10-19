@@ -1,10 +1,10 @@
-// Package config handles configuration parsing and validation for tsbridge.
+// Package config handles configuration parsing and validation for tailnet.
 package config
 
 import (
 	"context"
 
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 )
 
 // Provider defines the interface for configuration providers

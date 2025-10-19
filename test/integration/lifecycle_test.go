@@ -3,7 +3,7 @@ package integration
 import (
 	"testing"
 
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,7 +29,7 @@ func TestE2EServiceCreationAndLifecycle(t *testing.T) {
 	})
 	configPath := helpers.WriteConfigFile(t, cfg)
 
-	// Start tsbridge process
+	// Start tailnet process
 	process := helpers.StartTSBridge(t, configPath)
 
 	// Get the output

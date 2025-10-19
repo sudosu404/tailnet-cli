@@ -1,6 +1,6 @@
 # Examples
 
-Working examples of tsbridge configurations.
+Working examples of tailnet configurations.
 
 ## simple/
 
@@ -26,15 +26,15 @@ docker compose up
 
 ## multi-compose/
 
-tsbridge and services in separate compose files with shared networking:
+tailnet and services in separate compose files with shared networking:
 
 ```bash
 cd multi-compose
 export TS_OAUTH_CLIENT_ID="your-client-id"
 export TS_OAUTH_CLIENT_SECRET="your-client-secret"
 
-# Start tsbridge first (creates shared network)
-docker compose -f tsbridge-compose.yml up -d
+# Start tailnet first (creates shared network)
+docker compose -f tailnet-compose.yml up -d
 
 # Start services (uses external network) 
 docker compose -f services-compose.yml up -d
@@ -54,7 +54,7 @@ docker compose exec headscale headscale --user 1 preauthkeys create --reusable -
 
 # Set auth key and restart
 export TS_AUTHKEY="<auth-key-from-above>"
-docker compose up -d tsbridge tailscale-client
+docker compose up -d tailnet tailscale-client
 ```
 
 ## backend/
@@ -65,7 +65,7 @@ Shared test backend that echoes request info and shows Tailscale headers.
 
 ```bash
 # Logs
-docker compose logs -f tsbridge
+docker compose logs -f tailnet
 
 # Metrics
 curl http://localhost:9090

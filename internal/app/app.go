@@ -1,4 +1,4 @@
-// Package app provides the main application lifecycle management for tsbridge.
+// Package app provides the main application lifecycle management for tailnet.
 package app
 
 import (
@@ -8,16 +8,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	tserrors "github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/metrics"
-	"github.com/jtdowney/tsbridge/internal/service"
-	"github.com/jtdowney/tsbridge/internal/tailscale"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	tserrors "github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/metrics"
+	"github.com/sudosu404/tailnet-cli/internal/service"
+	"github.com/sudosu404/tailnet-cli/internal/tailscale"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 )
 
-// App encapsulates the tsbridge application lifecycle
+// App encapsulates the tailnet application lifecycle
 type App struct {
 	cfg           *config.Config
 	provider      config.Provider

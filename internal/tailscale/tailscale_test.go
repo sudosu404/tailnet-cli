@@ -18,8 +18,8 @@ import (
 
 	"tailscale.com/ipn/ipnstate"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	tsnet "github.com/jtdowney/tsbridge/internal/tsnet"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	tsnet "github.com/sudosu404/tailnet-cli/internal/tsnet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -727,7 +727,7 @@ func TestValidateTailscaleSecrets(t *testing.T) {
 func TestGetDefaultStateDir(t *testing.T) {
 	dir := getDefaultStateDir()
 	assert.NotEmpty(t, dir)
-	assert.True(t, strings.HasSuffix(dir, "tsbridge"))
+	assert.True(t, strings.HasSuffix(dir, "tailnet"))
 }
 
 func TestStateDirResolution(t *testing.T) {
@@ -746,7 +746,7 @@ func TestStateDirResolution(t *testing.T) {
 			envVars: map[string]string{
 				"STATE_DIR_ENV_VAR":  "/env/specified/dir",
 				"STATE_DIRECTORY":    "/systemd/state",
-				"TSBRIDGE_STATE_DIR": "/tsbridge/state",
+				"TSBRIDGE_STATE_DIR": "/tailnet/state",
 			},
 			expectedDir: "/custom/config/dir/test-service",
 			serviceName: "test-service",
@@ -756,7 +756,7 @@ func TestStateDirResolution(t *testing.T) {
 			configStateDir: "/custom/env/state", // This simulates state_dir_env being resolved during config loading
 			envVars: map[string]string{
 				"STATE_DIRECTORY":    "/systemd/state",
-				"TSBRIDGE_STATE_DIR": "/tsbridge/state",
+				"TSBRIDGE_STATE_DIR": "/tailnet/state",
 			},
 			expectedDir: "/custom/env/state/test-service",
 			serviceName: "test-service",
@@ -764,18 +764,18 @@ func TestStateDirResolution(t *testing.T) {
 		{
 			name: "STATE_DIRECTORY is used when no config or state_dir_env",
 			envVars: map[string]string{
-				"STATE_DIRECTORY":    "/var/lib/tsbridge",
-				"TSBRIDGE_STATE_DIR": "/tsbridge/state",
+				"STATE_DIRECTORY":    "/var/lib/tailnet",
+				"TSBRIDGE_STATE_DIR": "/tailnet/state",
 			},
-			expectedDir: "/var/lib/tsbridge/test-service",
+			expectedDir: "/var/lib/tailnet/test-service",
 			serviceName: "test-service",
 		},
 		{
 			name: "TSBRIDGE_STATE_DIR is used when STATE_DIRECTORY is not set",
 			envVars: map[string]string{
-				"TSBRIDGE_STATE_DIR": "/tsbridge/custom/state",
+				"TSBRIDGE_STATE_DIR": "/tailnet/custom/state",
 			},
-			expectedDir: "/tsbridge/custom/state/test-service",
+			expectedDir: "/tailnet/custom/state/test-service",
 			serviceName: "test-service",
 		},
 		{
@@ -786,9 +786,9 @@ func TestStateDirResolution(t *testing.T) {
 		{
 			name: "STATE_DIRECTORY with multiple paths uses first one",
 			envVars: map[string]string{
-				"STATE_DIRECTORY": "/var/lib/tsbridge:/var/lib/tsbridge2",
+				"STATE_DIRECTORY": "/var/lib/tailnet:/var/lib/tsbridge2",
 			},
-			expectedDir: "/var/lib/tsbridge/test-service",
+			expectedDir: "/var/lib/tailnet/test-service",
 			serviceName: "test-service",
 		},
 	}

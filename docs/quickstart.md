@@ -1,12 +1,12 @@
 # Quick Start Guide
 
-Get tsbridge running in 5 minutes.
+Get tailnet running in 5 minutes.
 
 ## 1. Get OAuth Credentials
 
 1. Go to <https://login.tailscale.com/admin/settings/oauth>
 2. Click **Generate OAuth client...**
-3. Name it something like `tsbridge`
+3. Name it something like `tailnet`
 4. Under **Scopes** → **Auth Keys**, check both **Read** and **Write**
 5. **Tags**: Select a tag (e.g., `tag:server`) - this tag will be used by your services
 6. Click **Generate client**
@@ -14,7 +14,7 @@ Get tsbridge running in 5 minutes.
 
 ## 2. Create Config File
 
-Create `tsbridge.toml`:
+Create `tailnet.toml`:
 
 ```toml
 [tailscale]
@@ -32,7 +32,7 @@ backend_addr = "localhost:8080"
 ```bash
 export TS_OAUTH_CLIENT_ID=your-client-id
 export TS_OAUTH_CLIENT_SECRET=your-client-secret
-tsbridge -config tsbridge.toml
+tailnet -config tailnet.toml
 ```
 
 Your service is now available at `https://app.<tailnet>.ts.net`
@@ -82,9 +82,9 @@ flush_interval = "-1ms"  # No buffering
 
 ```toml
 [tailscale]
-oauth_client_id_file = "/etc/tsbridge/oauth-id"
-oauth_client_secret_file = "/etc/tsbridge/oauth-secret"
-state_dir = "/var/lib/tsbridge"
+oauth_client_id_file = "/etc/tailnet/oauth-id"
+oauth_client_secret_file = "/etc/tailnet/oauth-secret"
+state_dir = "/var/lib/tailnet"
 default_tags = ["tag:server", "tag:prod"]
 
 [global]
@@ -105,42 +105,42 @@ downstream_headers = {
 
 ```yaml
 services:
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command: ["--provider", "docker"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - tsbridge-state:/var/lib/tsbridge
+      - tailnet-state:/var/lib/tailnet
     environment:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     labels:
-      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      - "tsbridge.tailscale.default_tags=tag:server"  # Must match or be owned by your OAuth client's tag
+      - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tailnet.tailscale.state_dir=/var/lib/tailnet"
+      - "tailnet.tailscale.default_tags=tag:server"  # Must match or be owned by your OAuth client's tag
 
   myapp:
     image: myapp:latest
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=myapp"
-      - "tsbridge.service.port=8080"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=myapp"
+      - "tailnet.service.port=8080"
       # Optional: Override default tags for this service
-      # - "tsbridge.service.tags=tag:api,tag:prod"
+      # - "tailnet.service.tags=tag:api,tag:prod"
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
 ```
 
-> **Network Requirements**: tsbridge and service containers must be on the same Docker network. They don't need to be in the same compose file, but network connectivity is required. See [Docker Labels - Docker Networking](docker-labels.md#docker-networking) for multi-compose setups.
+> **Network Requirements**: tailnet and service containers must be on the same Docker network. They don't need to be in the same compose file, but network connectivity is required. See [Docker Labels - Docker Networking](docker-labels.md#docker-networking) for multi-compose setups.
 
 ## Troubleshooting
 
 ### Validate Your Config
 
 ```bash
-tsbridge -config tsbridge.toml -validate
+tailnet -config tailnet.toml -validate
 ```
 
 ### Common Issues

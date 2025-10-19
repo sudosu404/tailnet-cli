@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -478,14 +478,14 @@ tags = ["tag:test"]
 		require.NoError(t, os.WriteFile(tmpFile, []byte(configContent), 0644))
 
 		// Set TSBRIDGE_ environment variables to override
-		t.Setenv("TSBRIDGE_TAILSCALE_OAUTH_CLIENT_ID", "tsbridge-override-id")
+		t.Setenv("TSBRIDGE_TAILSCALE_OAUTH_CLIENT_ID", "tailnet-override-id")
 		t.Setenv("TSBRIDGE_GLOBAL_READ_HEADER_TIMEOUT", "60s")
 
 		cfg, err := Load(tmpFile)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
-		assert.Equal(t, "tsbridge-override-id", cfg.Tailscale.OAuthClientID)
+		assert.Equal(t, "tailnet-override-id", cfg.Tailscale.OAuthClientID)
 		assert.Equal(t, "config-secret", cfg.Tailscale.OAuthClientSecret.Value()) // Not overridden
 		assert.Equal(t, 60*time.Second, *cfg.Global.ReadHeaderTimeout)
 		assert.Equal(t, 40*time.Second, *cfg.Global.WriteTimeout) // Not overridden
@@ -1245,7 +1245,7 @@ func TestValidate(t *testing.T) {
 				Tailscale: Tailscale{
 					OAuthClientID:     "test-id",
 					OAuthClientSecret: "test-secret",
-					StateDir:          "/var/lib/tsbridge",
+					StateDir:          "/var/lib/tailnet",
 				},
 				Global: Global{
 					ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
@@ -1985,12 +1985,12 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID:     "client-123",
 				OAuthClientSecret: "super-secret-value",
-				StateDir:          "/var/lib/tsbridge",
+				StateDir:          "/var/lib/tailnet",
 			},
 			contains: []string{
 				"OAuthClientID: client-123",
 				"OAuthClientSecret: [REDACTED]",
-				"StateDir: /var/lib/tsbridge",
+				"StateDir: /var/lib/tailnet",
 			},
 			notContains: []string{
 				"super-secret-value",
@@ -2001,7 +2001,7 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID:        "client-123",
 				OAuthClientSecretEnv: "SECRET_ENV_VAR",
-				StateDir:             "/var/lib/tsbridge",
+				StateDir:             "/var/lib/tailnet",
 			},
 			contains: []string{
 				"OAuthClientID: client-123",
@@ -2014,7 +2014,7 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID:         "client-123",
 				OAuthClientSecretFile: "/path/to/secret/file",
-				StateDir:              "/var/lib/tsbridge",
+				StateDir:              "/var/lib/tailnet",
 			},
 			contains: []string{
 				"OAuthClientID: client-123",
@@ -2027,7 +2027,7 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID: "client-123",
 				AuthKey:       "tskey-auth-1234567890",
-				StateDir:      "/var/lib/tsbridge",
+				StateDir:      "/var/lib/tailnet",
 			},
 			contains: []string{
 				"AuthKey: [REDACTED]",
@@ -2041,7 +2041,7 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID: "client-123",
 				AuthKeyEnv:    "TAILSCALE_AUTH_KEY",
-				StateDir:      "/var/lib/tsbridge",
+				StateDir:      "/var/lib/tailnet",
 			},
 			contains: []string{
 				"AuthKeyEnv: TAILSCALE_AUTH_KEY",
@@ -2053,7 +2053,7 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID: "client-123",
 				AuthKeyFile:   "/path/to/auth/key",
-				StateDir:      "/var/lib/tsbridge",
+				StateDir:      "/var/lib/tailnet",
 			},
 			contains: []string{
 				"AuthKeyFile: /path/to/auth/key",
@@ -2065,11 +2065,11 @@ func TestTailscaleString(t *testing.T) {
 			ts: Tailscale{
 				OAuthClientID:     "client-123",
 				OAuthClientSecret: "secret",
-				StateDir:          "/var/lib/tsbridge",
+				StateDir:          "/var/lib/tailnet",
 			},
 			contains: []string{
 				"OAuthClientID: client-123",
-				"StateDir: /var/lib/tsbridge",
+				"StateDir: /var/lib/tailnet",
 			},
 		},
 		{
@@ -2108,7 +2108,7 @@ func TestConfigString(t *testing.T) {
 			OAuthClientID:     "client-123",
 			OAuthClientSecret: "super-secret",
 			AuthKey:           "tskey-auth-secret",
-			StateDir:          "/var/lib/tsbridge",
+			StateDir:          "/var/lib/tailnet",
 		},
 		Global: Global{
 			ReadHeaderTimeout: testhelpers.DurationPtr(5 * time.Second),
@@ -2147,7 +2147,7 @@ func TestConfigString(t *testing.T) {
 	// Check that non-sensitive fields are present
 	expectedValues := []string{
 		"client-123",        // OAuth client ID should be visible
-		"/var/lib/tsbridge", // State dir should be visible
+		"/var/lib/tailnet", // State dir should be visible
 		"5000000000",        // 5s timeout in nanoseconds should be visible
 		":9090",             // Metrics address should be visible
 		"api",               // Service names should be visible

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 )
 
 // TestFixture represents a reusable test configuration
@@ -949,7 +949,7 @@ func TestDockerProviderRegistration(t *testing.T) {
 		// Try to create Docker provider
 		provider, err := NewProvider("docker", "", DockerProviderOptions{
 			DockerEndpoint: "unix:///var/run/docker.sock",
-			LabelPrefix:    "tsbridge",
+			LabelPrefix:    "tailnet",
 		})
 
 		if err != nil {
@@ -1004,7 +1004,7 @@ func TestDockerProviderIntegration(t *testing.T) {
 		// Create Docker provider
 		provider, err := NewProvider("docker", "", DockerProviderOptions{
 			DockerEndpoint: "unix:///var/run/docker.sock",
-			LabelPrefix:    "tsbridge",
+			LabelPrefix:    "tailnet",
 		})
 		if err != nil {
 			t.Fatalf("Failed to create Docker provider: %v", err)
@@ -1048,27 +1048,27 @@ func TestDockerProviderLabelParsing(t *testing.T) {
 
 		// In a real Docker provider test, these labels would come from
 		// container labels. The Docker provider would:
-		// 1. Find containers with tsbridge.enabled=true
+		// 1. Find containers with tailnet.enabled=true
 		// 2. Parse service configuration from their labels
 		// 3. Apply the same ProcessLoadedConfig as FileProvider
 
 		// Expected Docker labels for minimal config:
 		expectedLabels := map[string]string{
-			"tsbridge.enabled":              "true",
-			"tsbridge.service.name":         "test-service",
-			"tsbridge.service.backend_addr": "localhost:8080",
+			"tailnet.enabled":              "true",
+			"tailnet.service.name":         "test-service",
+			"tailnet.service.backend_addr": "localhost:8080",
 		}
 
 		// Verify our test fixture matches expected Docker label structure
 		if minimalFixture.ExpectedConfig != nil {
 			svc := minimalFixture.ExpectedConfig.Services[0]
-			if expectedLabels["tsbridge.service.name"] != svc.Name {
+			if expectedLabels["tailnet.service.name"] != svc.Name {
 				t.Errorf("Label name mismatch: got %q, want %q",
-					expectedLabels["tsbridge.service.name"], svc.Name)
+					expectedLabels["tailnet.service.name"], svc.Name)
 			}
-			if expectedLabels["tsbridge.service.backend_addr"] != svc.BackendAddr {
+			if expectedLabels["tailnet.service.backend_addr"] != svc.BackendAddr {
 				t.Errorf("Label backend_addr mismatch: got %q, want %q",
-					expectedLabels["tsbridge.service.backend_addr"], svc.BackendAddr)
+					expectedLabels["tailnet.service.backend_addr"], svc.BackendAddr)
 			}
 		}
 	})
@@ -1078,13 +1078,13 @@ func TestDockerProviderLabelParsing(t *testing.T) {
 		// This demonstrates how the full_featured fixture would map to Docker labels
 		complexLabels := map[string]string{
 			// Service configuration
-			"tsbridge.enabled":                                  "true",
-			"tsbridge.service.name":                             "api",
-			"tsbridge.service.backend_addr":                     "localhost:8080",
-			"tsbridge.service.whois_enabled":                    "true",
-			"tsbridge.service.whois_timeout":                    "5s",
-			"tsbridge.service.tls_mode":                         "off",
-			"tsbridge.service.upstream_headers.X-Custom-Header": "custom-value",
+			"tailnet.enabled":                                  "true",
+			"tailnet.service.name":                             "api",
+			"tailnet.service.backend_addr":                     "localhost:8080",
+			"tailnet.service.whois_enabled":                    "true",
+			"tailnet.service.whois_timeout":                    "5s",
+			"tailnet.service.tls_mode":                         "off",
+			"tailnet.service.upstream_headers.X-Custom-Header": "custom-value",
 		}
 
 		// Verify label structure matches our fixtures
@@ -1093,7 +1093,7 @@ func TestDockerProviderLabelParsing(t *testing.T) {
 			if fixture.Name == "full_featured" && fixture.ExpectedConfig != nil {
 				// The first service in full_featured should match our complex labels
 				svc := fixture.ExpectedConfig.Services[0]
-				if complexLabels["tsbridge.service.name"] != svc.Name {
+				if complexLabels["tailnet.service.name"] != svc.Name {
 					t.Errorf("Complex config name mismatch")
 				}
 				// Additional validations would go here

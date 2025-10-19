@@ -5,8 +5,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/jtdowney/tsbridge/internal/app"
-	"github.com/jtdowney/tsbridge/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/app"
+	"github.com/sudosu404/tailnet-cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -360,14 +360,14 @@ func TestFlagParsing(t *testing.T) {
 			name:         "default values",
 			args:         []string{},
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "file provider with config",
 			args:         []string{"-provider", "file", "-config", "/path/to/config.toml"},
 			wantProvider: "file",
 			wantConfig:   "/path/to/config.toml",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "docker provider with custom options",
@@ -381,28 +381,28 @@ func TestFlagParsing(t *testing.T) {
 			args:         []string{"-verbose"},
 			wantVerbose:  true,
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "help flag",
 			args:         []string{"-help"},
 			wantHelp:     true,
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "version flag",
 			args:         []string{"-version"},
 			wantVersion:  true,
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "validate flag",
 			args:         []string{"-validate"},
 			wantValidate: true,
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:         "validate flag with config",
@@ -410,7 +410,7 @@ func TestFlagParsing(t *testing.T) {
 			wantValidate: true,
 			wantConfig:   "/path/to/config.toml",
 			wantProvider: "file",
-			wantLabel:    "tsbridge",
+			wantLabel:    "tailnet",
 		},
 		{
 			name:           "unknown flag",
@@ -437,7 +437,7 @@ func TestFlagParsing(t *testing.T) {
 			provider := fs.String("provider", "file", "Configuration provider")
 			configPath := fs.String("config", "", "Path to TOML configuration file")
 			dockerEndpoint := fs.String("docker-socket", "", "Docker socket endpoint")
-			labelPrefix := fs.String("docker-label-prefix", "tsbridge", "Docker label prefix")
+			labelPrefix := fs.String("docker-label-prefix", "tailnet", "Docker label prefix")
 			verbose := fs.Bool("verbose", false, "Enable debug logging")
 			help := fs.Bool("help", false, "Show usage information")
 			versionFlag := fs.Bool("version", false, "Show version information")
@@ -473,7 +473,7 @@ func TestMainIntegration(t *testing.T) {
 	}
 
 	// Build the binary for testing
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = filepath.Dir(".")
 	err := cmd.Run()
@@ -499,7 +499,7 @@ func TestMainIntegration(t *testing.T) {
 			name:       "version flag shows version",
 			args:       []string{"-version"},
 			wantExit:   0,
-			wantOutput: []string{"tsbridge version:"},
+			wantOutput: []string{"tailnet version:"},
 			timeout:    2 * time.Second,
 		},
 		{
@@ -541,7 +541,7 @@ func TestMainIntegration(t *testing.T) {
 			name:       "multiple flags order independence",
 			args:       []string{"-version", "-verbose"},
 			wantExit:   0,
-			wantOutput: []string{"tsbridge version:"},
+			wantOutput: []string{"tailnet version:"},
 			timeout:    2 * time.Second,
 		},
 	}
@@ -602,7 +602,7 @@ backend_addr = "localhost:8080"
 	require.NoError(t, err)
 
 	// Build the binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = filepath.Dir(".")
 	err = cmd.Run()
@@ -632,7 +632,7 @@ backend_addr = "localhost:8080"
 
 	// Check that it started properly
 	output := stdout.String() + stderr.String()
-	assert.Contains(t, output, "starting tsbridge")
+	assert.Contains(t, output, "starting tailnet")
 	assert.Contains(t, output, "loading configuration")
 	assert.Contains(t, output, "creating application")
 }
@@ -659,7 +659,7 @@ backend_addr = "localhost:8080"
 	require.NoError(t, err)
 
 	// Build the binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = filepath.Dir(".")
 	err = cmd.Run()
@@ -727,7 +727,7 @@ func TestParseCLIArgs(t *testing.T) {
 			args: []string{},
 			want: &cliArgs{
 				provider:    "file",
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 			},
 		},
 		{
@@ -759,7 +759,7 @@ func TestParseCLIArgs(t *testing.T) {
 			want: &cliArgs{
 				provider:    "file",
 				configPath:  "test.toml",
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 			},
 		},
 		{
@@ -767,7 +767,7 @@ func TestParseCLIArgs(t *testing.T) {
 			args: []string{"-validate"},
 			want: &cliArgs{
 				provider:    "file",
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 				validate:    true,
 			},
 		},
@@ -777,7 +777,7 @@ func TestParseCLIArgs(t *testing.T) {
 			want: &cliArgs{
 				provider:    "file",
 				configPath:  "config.toml",
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 				validate:    true,
 			},
 		},
@@ -792,7 +792,7 @@ func TestParseCLIArgs(t *testing.T) {
 			args: []string{"-h"},
 			want: &cliArgs{
 				provider:    "file",
-				labelPrefix: "tsbridge",
+				labelPrefix: "tailnet",
 				help:        true,
 			},
 		},
@@ -895,12 +895,12 @@ func TestRun(t *testing.T) {
 		{
 			name:       "help flag",
 			args:       &cliArgs{help: true},
-			wantOutput: []string{"Usage of tsbridge:", "-config", "-provider", "-validate"},
+			wantOutput: []string{"Usage of tailnet:", "-config", "-provider", "-validate"},
 		},
 		{
 			name:       "version flag",
 			args:       &cliArgs{version: true},
-			wantOutput: []string{"tsbridge version: test-v1.0.0"},
+			wantOutput: []string{"tailnet version: test-v1.0.0"},
 		},
 		{
 			name:    "missing config for file provider",
@@ -1070,10 +1070,10 @@ backend_addr = "localhost:8080"
 			// Check output
 			outputStr := string(output)
 			logStr := logBuf.String()
-			// For help, also check if it printed "Usage of tsbridge:" but without the full content
+			// For help, also check if it printed "Usage of tailnet:" but without the full content
 			if tt.name == "help flag" && outputStr != "" {
 				// Help was printed, we're good
-				assert.Contains(t, outputStr, "Usage of tsbridge:")
+				assert.Contains(t, outputStr, "Usage of tailnet:")
 			} else {
 				for _, want := range tt.wantOutput {
 					// Check both stdout and logs
@@ -1110,27 +1110,27 @@ func TestMainFunction(t *testing.T) {
 	}{
 		{
 			name:     "help flag",
-			args:     []string{"tsbridge", "-help"},
+			args:     []string{"tailnet", "-help"},
 			wantExit: 0,
 		},
 		{
 			name:     "short help flag",
-			args:     []string{"tsbridge", "-h"},
+			args:     []string{"tailnet", "-h"},
 			wantExit: 0,
 		},
 		{
 			name:     "version flag",
-			args:     []string{"tsbridge", "-version"},
+			args:     []string{"tailnet", "-version"},
 			wantExit: 0,
 		},
 		{
 			name:     "invalid flag",
-			args:     []string{"tsbridge", "-invalid"},
+			args:     []string{"tailnet", "-invalid"},
 			wantExit: 2,
 		},
 		{
 			name:     "missing config",
-			args:     []string{"tsbridge", "-provider", "file"},
+			args:     []string{"tailnet", "-provider", "file"},
 			wantExit: 1,
 			checkLog: "-config flag is required for file provider",
 		},
@@ -1198,7 +1198,7 @@ func TestMainDockerProvider(t *testing.T) {
 	}
 
 	// Build the binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = filepath.Dir(".")
 	err := cmd.Run()
@@ -1640,7 +1640,7 @@ backend_addr = "localhost:8080"
 	}
 
 	// Build the binary once
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = filepath.Dir(".")
 	err := cmd.Run()
@@ -1827,7 +1827,7 @@ backend_addr = "localhost:8080"
 			args: &cliArgs{
 				provider:       "docker",
 				dockerEndpoint: "unix:///var/run/docker.sock",
-				labelPrefix:    "tsbridge",
+				labelPrefix:    "tailnet",
 			},
 			wantProvider: "docker",
 		},

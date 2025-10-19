@@ -6,7 +6,7 @@ LDFLAGS := -ldflags "-X main.version=$(VERSION)"
 
 .PHONY: build
 build:
-	go build $(LDFLAGS) -o tsbridge ./cmd/tsbridge
+	go build $(LDFLAGS) -o tailnet ./cmd/tailnet
 
 .PHONY: test
 test:
@@ -30,11 +30,11 @@ tidy:
 
 .PHONY: clean
 clean:
-	rm -f tsbridge
+	rm -f tailnet
 
 .PHONY: run
 run: build
-	./tsbridge $(ARGS)
+	./tailnet $(ARGS)
 
 .PHONY: integration
 integration:
@@ -58,5 +58,5 @@ release-snapshot:
 docker-push-sha:
 	@echo "Building and pushing Docker images with SHA: sha-$(shell git rev-parse --short HEAD)"
 	docker buildx build --platform linux/amd64,linux/arm64 \
-		-t ghcr.io/jtdowney/tsbridge:sha-$(shell git rev-parse --short HEAD) \
+		-t ghcr.io/sudosu404/tailnet-cli:sha-$(shell git rev-parse --short HEAD) \
 		--push .

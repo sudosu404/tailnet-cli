@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"

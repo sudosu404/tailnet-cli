@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete reference for all tsbridge configuration options.
+Complete reference for all tailnet configuration options.
 
 ## Configuration Structure
 
@@ -21,27 +21,27 @@ Complete reference for all tsbridge configuration options.
 
 You must provide either OAuth credentials OR an auth key.
 
-> **Resolution Order**: tsbridge resolves secret values in the following priority order:
+> **Resolution Order**: tailnet resolves secret values in the following priority order:
 >
 > 1. **Direct value** (inline in config file)
 > 2. **File** (from `_file` suffix)
 > 3. **Environment variable** (from `_env` suffix)
 > 4. **Default environment variable** (e.g., `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_CLIENT_SECRET`, `TS_AUTHKEY`)
 >
-> If any configured source (file or env var) is specified but cannot be accessed or is empty, tsbridge will return an error instead of falling back to the next priority level.
+> If any configured source (file or env var) is specified but cannot be accessed or is empty, tailnet will return an error instead of falling back to the next priority level.
 
 #### OAuth Credentials
 
 ```toml
 # Client ID - choose one method:
 oauth_client_id = "k12...89"                      # Direct value (highest priority)
-oauth_client_id_file = "/etc/tsbridge/oauth-id"   # From file (second priority)
+oauth_client_id_file = "/etc/tailnet/oauth-id"   # From file (second priority)
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"        # From environment variable (third priority)
 # Will fallback to TS_OAUTH_CLIENT_ID env var if none of the above are specified
 
 # Client Secret - choose one method:
 oauth_client_secret = "tskey-client-..."                   # Direct value (highest priority)
-oauth_client_secret_file = "/etc/tsbridge/oauth-secret"    # From file (second priority)
+oauth_client_secret_file = "/etc/tailnet/oauth-secret"    # From file (second priority)
 oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"         # From environment variable (third priority)
 # Will fallback to TS_OAUTH_CLIENT_SECRET env var if none of the above are specified
 ```
@@ -51,7 +51,7 @@ oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"         # From environment va
 ```toml
 # Auth key - choose one method:
 auth_key = "tskey-auth-..."              # Direct value (highest priority)
-auth_key_file = "/etc/tsbridge/authkey"  # From file (second priority)
+auth_key_file = "/etc/tailnet/authkey"  # From file (second priority)
 auth_key_env = "TS_AUTHKEY"              # From environment variable (third priority)
 # Will fallback to TS_AUTHKEY env var if none of the above are specified
 ```
@@ -60,7 +60,7 @@ auth_key_env = "TS_AUTHKEY"              # From environment variable (third prio
 
 ```toml
 # State directory for tsnet data
-state_dir = "/var/lib/tsbridge"          # Direct path
+state_dir = "/var/lib/tailnet"          # Direct path
 state_dir_env = "CUSTOM_STATE_DIR"       # From environment variable
 
 # Default tags for all services (required when using OAuth)
@@ -78,7 +78,7 @@ oauth_preauthorized = false
 
 ### Tag Ownership and OAuth Security
 
-tsbridge supports Tailscale's tag ownership model for enhanced security. This allows an OAuth client with a parent tag to manage multiple service tags through a permission hierarchy.
+tailnet supports Tailscale's tag ownership model for enhanced security. This allows an OAuth client with a parent tag to manage multiple service tags through a permission hierarchy.
 
 #### Setting Up Tag Ownership
 
@@ -87,19 +87,19 @@ Configure tag ownership in your Tailscale ACL policy:
 ```jsonc
 {
   "tagOwners": {
-    "tag:tsbridge": [], // Parent tag for OAuth client
-    "tag:server": ["tag:tsbridge"],
-    "tag:proxy": ["tag:tsbridge"],
-    "tag:prod": ["tag:tsbridge"],
-    "tag:dev": ["tag:tsbridge"]
+    "tag:tailnet": [], // Parent tag for OAuth client
+    "tag:server": ["tag:tailnet"],
+    "tag:proxy": ["tag:tailnet"],
+    "tag:prod": ["tag:tailnet"],
+    "tag:dev": ["tag:tailnet"]
   }
 }
 ```
 
 In this configuration:
 
-- `tag:tsbridge` is the parent tag for the OAuth client
-- `tag:server`, `tag:proxy`, `tag:prod`, and `tag:dev` are service tags owned by `tag:tsbridge`
+- `tag:tailnet` is the parent tag for the OAuth client
+- `tag:server`, `tag:proxy`, `tag:prod`, and `tag:dev` are service tags owned by `tag:tailnet`
 
 #### Creating the OAuth Client
 
@@ -107,24 +107,24 @@ In this configuration:
 2. Click **Generate OAuth client...**
 3. Configure:
    - **Scopes**: Check both **Read** and **Write** under **Auth Keys**
-   - **Tags**: Select `tag:tsbridge` (the parent tag, NOT the service tags)
+   - **Tags**: Select `tag:tailnet` (the parent tag, NOT the service tags)
 4. Save the credentials
 
 **Important**: Select only the parent tag for the OAuth client. This grants permission to create auth keys for all tags it owns.
 
-#### Using Tag Hierarchies in tsbridge
+#### Using Tag Hierarchies in tailnet
 
 ```toml
 [tailscale]
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
 oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
-# These tags must be owned by tag:tsbridge in your ACL
+# These tags must be owned by tag:tailnet in your ACL
 default_tags = ["tag:server", "tag:proxy"]
 
 [[services]]
 name = "api"
 backend_addr = "localhost:8080"
-tags = ["tag:server", "tag:prod"]  # Both owned by tag:tsbridge
+tags = ["tag:server", "tag:prod"]  # Both owned by tag:tailnet
 ```
 
 This approach provides centralized permission management while maintaining clear security boundaries between services.
@@ -263,7 +263,7 @@ ephemeral = true           # Don't persist node state (default: false)
 ```toml
 # Add headers to requests going to backend
 upstream_headers = {
-  "X-Service-Name" = "tsbridge",
+  "X-Service-Name" = "tailnet",
   "X-Request-ID" = "generated"
 }
 
@@ -313,7 +313,7 @@ Default environment variables checked if no config specified:
 
 ## Secret Resolution
 
-tsbridge resolves secrets using different modes based on what you specify:
+tailnet resolves secrets using different modes based on what you specify:
 
 **Direct mode** (when you set a value directly):
 
@@ -325,7 +325,7 @@ oauth_client_id = "k12...89"  # This value is used
 
 ```toml
 oauth_client_id_env = "MY_CUSTOM_VAR"  # Reads from MY_CUSTOM_VAR
-# Must be set; if unset or empty, tsbridge returns an error.
+# Must be set; if unset or empty, tailnet returns an error.
 # Fallback to TS_OAUTH_CLIENT_ID is used only when no oauth_client_id/_env/_file is configured at all.
 ```
 
@@ -333,7 +333,7 @@ oauth_client_id_env = "MY_CUSTOM_VAR"  # Reads from MY_CUSTOM_VAR
 
 ```toml
 oauth_client_id_file = "/path/to/file"  # Reads from file
-# Must be readable; if missing or unreadable, tsbridge returns an error.
+# Must be readable; if missing or unreadable, tailnet returns an error.
 # Fallback to TS_OAUTH_CLIENT_ID is used only when no oauth_client_id/_env/_file is configured at all.
 ```
 
@@ -349,7 +349,7 @@ oauth_client_id_file = "/path/to/file"  # Reads from file
 Run with `-validate` flag to check configuration:
 
 ```bash
-tsbridge -config tsbridge.toml -validate
+tailnet -config tailnet.toml -validate
 ```
 
 Validates:
@@ -367,8 +367,8 @@ Validates:
 ```toml
 [tailscale]
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
-oauth_client_secret_file = "/etc/tsbridge/oauth-secret"
-state_dir = "/var/lib/tsbridge"
+oauth_client_secret_file = "/etc/tailnet/oauth-secret"
+state_dir = "/var/lib/tailnet"
 default_tags = ["tag:server", "tag:proxy"]
 
 [global]

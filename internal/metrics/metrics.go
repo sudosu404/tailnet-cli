@@ -12,12 +12,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Collector holds all prometheus metrics for tsbridge
+// Collector holds all prometheus metrics for tailnet
 type Collector struct {
 	RequestsTotal   *prometheus.CounterVec
 	RequestDuration *prometheus.HistogramVec

@@ -1,4 +1,4 @@
-# Headscale configuration for testing tsbridge
+# Headscale configuration for testing tailnet
 server_url: http://localhost:8080
 listen_addr: 0.0.0.0:8080
 metrics_listen_addr: 0.0.0.0:9090

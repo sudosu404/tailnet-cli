@@ -4,8 +4,8 @@
 # OAuth credentials (replace with your actual values)
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
 oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
-state_dir = "/var/lib/tsbridge"
-default_tags = ["tag:tsbridge"]
+state_dir = "/var/lib/tailnet"
+default_tags = ["tag:tailnet"]
 
 [global]
 # Metrics endpoint

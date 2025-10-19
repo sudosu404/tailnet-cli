@@ -20,9 +20,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/metrics"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/metrics"
 )
 
 // simpleHandler wraps an http.HandlerFunc to implement the Handler interface
@@ -982,7 +982,7 @@ func TestNewHandlerWithHeaders(t *testing.T) {
 			name: "add upstream headers",
 			upstreamHeaders: map[string]string{
 				"X-Custom-Header": "custom-value",
-				"X-Service-Name":  "tsbridge",
+				"X-Service-Name":  "tailnet",
 			},
 			requestHeaders: map[string]string{
 				"X-Existing": "existing-value",
@@ -990,7 +990,7 @@ func TestNewHandlerWithHeaders(t *testing.T) {
 			expectedReqHeaders: map[string]string{
 				"X-Existing":      "existing-value",
 				"X-Custom-Header": "custom-value",
-				"X-Service-Name":  "tsbridge",
+				"X-Service-Name":  "tailnet",
 			},
 		},
 		{
@@ -1009,7 +1009,7 @@ func TestNewHandlerWithHeaders(t *testing.T) {
 			name: "add downstream headers",
 			downstreamHeaders: map[string]string{
 				"X-Response-Custom": "response-value",
-				"X-Powered-By":      "tsbridge",
+				"X-Powered-By":      "tailnet",
 			},
 			backendRespHeaders: map[string]string{
 				"Content-Type": "application/json",
@@ -1017,7 +1017,7 @@ func TestNewHandlerWithHeaders(t *testing.T) {
 			expectedRespHeaders: map[string]string{
 				"Content-Type":      "application/json",
 				"X-Response-Custom": "response-value",
-				"X-Powered-By":      "tsbridge",
+				"X-Powered-By":      "tailnet",
 			},
 		},
 		{

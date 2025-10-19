@@ -1,4 +1,4 @@
-// Package config handles configuration parsing and validation for tsbridge.
+// Package config handles configuration parsing and validation for tailnet.
 package config
 
 import (
@@ -18,11 +18,11 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
 
-	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 )
 
-// Config represents the complete tsbridge configuration
+// Config represents the complete tailnet configuration
 type Config struct {
 	Tailscale Tailscale `mapstructure:"tailscale"` // Tailscale authentication config
 	Global    Global    `mapstructure:"global"`    // Default settings for all services

@@ -1,4 +1,4 @@
-// Package testutil provides common test utilities for tsbridge tests.
+// Package testutil provides common test utilities for tailnet tests.
 package testutil
 
 import (
@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/tailscale"
-	"github.com/jtdowney/tsbridge/internal/tsnet"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/tailscale"
+	"github.com/sudosu404/tailnet-cli/internal/tsnet"
 	"github.com/stretchr/testify/require"
 )
 

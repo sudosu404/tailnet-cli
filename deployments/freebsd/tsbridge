@@ -1,37 +1,37 @@
 #!/bin/sh
 
-# PROVIDE: tsbridge
+# PROVIDE: tailnet
 # REQUIRE: DAEMON NETWORKING
 # BEFORE: LOGIN
 # KEYWORD: shutdown
 
-# Add the following lines to /etc/rc.conf to enable tsbridge:
+# Add the following lines to /etc/rc.conf to enable tailnet:
 #
 # tsbridge_enable (bool):       Set to "NO" by default.
-#                               Set it to "YES" to enable tsbridge.
-# tsbridge_config (path):       Set to "/usr/local/etc/tsbridge/config.toml" by default.
+#                               Set it to "YES" to enable tailnet.
+# tsbridge_config (path):       Set to "/usr/local/etc/tailnet/config.toml" by default.
 #                               Path to the configuration file.
-# tsbridge_user (str):          Set to "tsbridge" by default.
-#                               User to run tsbridge as.
-# tsbridge_group (str):         Set to "tsbridge" by default.
-#                               Group to run tsbridge as.
+# tsbridge_user (str):          Set to "tailnet" by default.
+#                               User to run tailnet as.
+# tsbridge_group (str):         Set to "tailnet" by default.
+#                               Group to run tailnet as.
 # tsbridge_flags (str):         Set to "" by default.
-#                               Extra flags passed to tsbridge.
+#                               Extra flags passed to tailnet.
 # tsbridge_env (str):           Set to "" by default.
-#                               Environment variables for tsbridge.
+#                               Environment variables for tailnet.
 # tsbridge_limits (str):        Set to "" by default.
 #                               Process limits (see limits(1)).
 
 . /etc/rc.subr
 
-name="tsbridge"
+name="tailnet"
 rcvar="${name}_enable"
 
 # Default values
 : ${tsbridge_enable:="NO"}
-: ${tsbridge_config:="/usr/local/etc/tsbridge/config.toml"}
-: ${tsbridge_user:="tsbridge"}
-: ${tsbridge_group:="tsbridge"}
+: ${tsbridge_config:="/usr/local/etc/tailnet/config.toml"}
+: ${tsbridge_user:="tailnet"}
+: ${tsbridge_group:="tailnet"}
 : ${tsbridge_flags:=""}
 : ${tsbridge_env:=""}
 : ${tsbridge_limits:=""}
@@ -39,7 +39,7 @@ rcvar="${name}_enable"
 # Paths
 pidfile="/var/run/${name}/${name}.pid"
 logfile="/var/log/${name}/${name}.log"
-command="/usr/local/bin/tsbridge"
+command="/usr/local/bin/tailnet"
 command_args="-config ${tsbridge_config} ${tsbridge_flags}"
 
 # Setup

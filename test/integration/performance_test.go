@@ -38,8 +38,8 @@ func TestMemoryLeaks(t *testing.T) {
 
 	// Build the binary once
 	baseTmpDir := t.TempDir()
-	binPath := filepath.Join(baseTmpDir, "tsbridge")
-	buildCmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	binPath := filepath.Join(baseTmpDir, "tailnet")
+	buildCmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build binary: %v\n%s", err, output)
 	}
@@ -81,7 +81,7 @@ whois_timeout = "5s"
 			t.Fatalf("failed to write config file: %v", err)
 		}
 
-		// Start tsbridge
+		// Start tailnet
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		cmd := exec.CommandContext(ctx, binPath, "-config", configPath)
 		cmd.Env = append(os.Environ(), "TSBRIDGE_TEST_MODE=1")
@@ -100,7 +100,7 @@ whois_timeout = "5s"
 
 		// Start the process
 		if err := cmd.Start(); err != nil {
-			t.Fatalf("failed to start tsbridge: %v", err)
+			t.Fatalf("failed to start tailnet: %v", err)
 		}
 
 		// Read output in goroutine
@@ -128,7 +128,7 @@ whois_timeout = "5s"
 		case <-done:
 			// Process exited cleanly
 		case <-time.After(10 * time.Second):
-			t.Error("tsbridge did not shut down within timeout")
+			t.Error("tailnet did not shut down within timeout")
 			cmd.Process.Kill()
 		}
 
@@ -217,8 +217,8 @@ whois_timeout = "5s"
 	}
 
 	// Build the binary with race detector
-	binPath := filepath.Join(tmpDir, "tsbridge")
-	cmd := exec.Command("go", "build", "-race", "-o", binPath, "../../cmd/tsbridge")
+	binPath := filepath.Join(tmpDir, "tailnet")
+	cmd := exec.Command("go", "build", "-race", "-o", binPath, "../../cmd/tailnet")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build binary: %v\n%s", err, output)
 	}
@@ -245,7 +245,7 @@ whois_timeout = "5s"
 
 		// Start the process
 		if err := cmd.Start(); err != nil {
-			t.Fatalf("failed to start tsbridge: %v", err)
+			t.Fatalf("failed to start tailnet: %v", err)
 		}
 
 		// Read output in goroutine
@@ -275,7 +275,7 @@ whois_timeout = "5s"
 		case exitErr = <-done:
 			t.Log("Process exited")
 		case <-time.After(10 * time.Second):
-			t.Error("tsbridge did not shut down within timeout")
+			t.Error("tailnet did not shut down within timeout")
 			cmd.Process.Kill()
 		}
 
@@ -353,13 +353,13 @@ whois_enabled = false
 	}
 
 	// Build the binary
-	binPath := filepath.Join(tmpDir, "tsbridge")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	binPath := filepath.Join(tmpDir, "tailnet")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build binary: %v\n%s", err, output)
 	}
 
-	// Start tsbridge
+	// Start tailnet
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -380,7 +380,7 @@ whois_enabled = false
 
 	// Start the process
 	if err := cmd.Start(); err != nil {
-		t.Fatalf("failed to start tsbridge: %v", err)
+		t.Fatalf("failed to start tailnet: %v", err)
 	}
 
 	// Read output in goroutine
@@ -465,7 +465,7 @@ serviceReady:
 			t.Log("Process exited cleanly")
 		}
 	case <-time.After(15 * time.Second):
-		t.Error("tsbridge did not shut down within timeout")
+		t.Error("tailnet did not shut down within timeout")
 		cmd.Process.Kill()
 	}
 

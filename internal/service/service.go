@@ -16,13 +16,13 @@ import (
 
 	"log/slog"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/constants"
-	tserrors "github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/metrics"
-	"github.com/jtdowney/tsbridge/internal/middleware"
-	"github.com/jtdowney/tsbridge/internal/proxy"
-	"github.com/jtdowney/tsbridge/internal/tailscale"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	tserrors "github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/metrics"
+	"github.com/sudosu404/tailnet-cli/internal/middleware"
+	"github.com/sudosu404/tailnet-cli/internal/proxy"
+	"github.com/sudosu404/tailnet-cli/internal/tailscale"
 )
 
 // Registry manages all services

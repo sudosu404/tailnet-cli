@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - tsbridge-demo
+      - tailnet-demo
 
   # Backend Web service  
   web-backend:
@@ -23,30 +23,30 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - tsbridge-demo
+      - tailnet-demo
 
-  # tsbridge proxy
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  # tailnet proxy
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     volumes:
-      - ./tsbridge.toml:/config/tsbridge.toml:ro
-      - tsbridge-state:/var/lib/tsbridge
+      - ./tailnet.toml:/config/tailnet.toml:ro
+      - tailnet-state:/var/lib/tailnet
     environment:
       # Replace with your actual OAuth credentials
       # You can get these from: https://login.tailscale.com/admin/settings/oauth
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
-    command: ["-config", "/config/tsbridge.toml", "-verbose"]
+    command: ["-config", "/config/tailnet.toml", "-verbose"]
     depends_on:
       - api-backend
       - web-backend
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     ports:
       - "9090:9090"  # Metrics port
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
 
 networks:
-  tsbridge-demo:
+  tailnet-demo:

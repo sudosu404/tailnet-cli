@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 )
 
 // TestInMemoryOAuthConfiguration was removed as it was redundant with TestInMemoryServiceWithInvalidBackend
@@ -103,7 +103,7 @@ func TestE2EFullStartupWithOAuth(t *testing.T) {
 	// Build the binary using helper
 	binPath := helpers.BuildTestBinary(t)
 
-	// Start tsbridge with timeout
+	// Start tailnet with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -133,7 +133,7 @@ func TestE2EFullStartupWithOAuth(t *testing.T) {
 	// Verify the server attempted to start
 	outputStr := string(output)
 	if outputStr == "" {
-		t.Error("expected some output from tsbridge")
+		t.Error("expected some output from tailnet")
 	}
 }
 

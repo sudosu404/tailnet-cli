@@ -3,19 +3,19 @@ services:
   whoami:
     image: traefik/whoami:v1.10.3
     labels:
-      # tsbridge will automatically discover this container
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=whoami"
-      - "tsbridge.service.port=80"
-      - "tsbridge.service.whois_enabled=true" # Add identity headers
+      # tailnet will automatically discover this container
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=whoami"
+      - "tailnet.service.port=80"
+      - "tailnet.service.whois_enabled=true" # Add identity headers
     networks:
-      - tsbridge-network
+      - tailnet-network
 
 volumes:
   db-data:
 
 networks:
-  tsbridge-network:
-    # Reference the external network created by tsbridge-compose.yml
+  tailnet-network:
+    # Reference the external network created by tailnet-compose.yml
     external: true
-    name: tsbridge-shared-network
+    name: tailnet-shared-network

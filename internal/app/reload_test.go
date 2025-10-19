@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jtdowney/tsbridge/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

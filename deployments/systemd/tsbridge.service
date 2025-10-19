@@ -1,18 +1,18 @@
 [Unit]
 Description=Tailscale Bridge Proxy Service
-Documentation=https://github.com/jtdowney/tsbridge
+Documentation=https://github.com/sudosu404/tailnet-cli
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=exec
-ExecStart=/usr/local/bin/tsbridge -config /etc/tsbridge/config.toml
+ExecStart=/usr/local/bin/tailnet -config /etc/tailnet/config.toml
 Restart=always
 RestartSec=10s
 
 # User and group
-User=tsbridge
-Group=tsbridge
+User=tailnet
+Group=tailnet
 
 # Security hardening
 NoNewPrivileges=true
@@ -30,8 +30,8 @@ RestrictRealtime=true
 RestrictSUIDSGID=true
 RemoveIPC=true
 
-# State directory management (systemd will create and manage /var/lib/tsbridge)
-StateDirectory=tsbridge
+# State directory management (systemd will create and manage /var/lib/tailnet)
+StateDirectory=tailnet
 StateDirectoryMode=0750
 
 # Resource limits
@@ -40,12 +40,12 @@ LimitNPROC=512
 
 # Environment
 Environment="GOMAXPROCS=0"
-EnvironmentFile=-/etc/tsbridge/tsbridge.env
+EnvironmentFile=-/etc/tailnet/tailnet.env
 
 # Logging (systemd will handle this)
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=tsbridge
+SyslogIdentifier=tailnet
 
 # Give it time to start up
 TimeoutStartSec=300s

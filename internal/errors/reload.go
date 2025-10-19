@@ -1,4 +1,4 @@
-// Package errors provides standardized error types and handling for tsbridge.
+// Package errors provides standardized error types and handling for tailnet.
 package errors
 
 import (

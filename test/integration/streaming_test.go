@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,7 +91,7 @@ func TestStreamingWithZeroTimeout(t *testing.T) {
 			},
 		}
 
-		// Write config and start tsbridge
+		// Write config and start tailnet
 		configPath := helpers.WriteConfigFile(t, cfg)
 		process := helpers.StartTSBridge(t, configPath)
 
@@ -163,7 +163,7 @@ func TestStreamingWithZeroTimeout(t *testing.T) {
 		assert.NotNil(t, cfg.Services[2].WriteTimeout)
 		assert.Equal(t, 60*time.Second, *cfg.Services[2].WriteTimeout, "custom-timeout should keep its value")
 
-		// Start tsbridge to verify it accepts the configuration
+		// Start tailnet to verify it accepts the configuration
 		configPath := helpers.WriteConfigFile(t, cfg)
 		process := helpers.StartTSBridge(t, configPath)
 
@@ -235,7 +235,7 @@ func TestFlushIntervalWithStreaming(t *testing.T) {
 	assert.NotNil(t, cfg.Services[2].FlushInterval)
 	assert.Equal(t, time.Duration(0), *cfg.Services[2].FlushInterval, "should keep zero")
 
-	// Start tsbridge
+	// Start tailnet
 	configPath := helpers.WriteConfigFile(t, cfg)
 	process := helpers.StartTSBridge(t, configPath)
 

@@ -1,29 +1,29 @@
 services:
-  # tsbridge proxy with Docker label configuration
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  # tailnet proxy with Docker label configuration
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command:
       - "--provider"
       - "docker"
       - "--verbose"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - tsbridge-state:/var/lib/tsbridge
+      - tailnet-state:/var/lib/tailnet
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     labels:
       # Tailscale OAuth configuration
-      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-      - "tsbridge.tailscale.default_tags=tag:server,tag:proxy"
-      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
+      - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tailnet.tailscale.default_tags=tag:server,tag:proxy"
+      - "tailnet.tailscale.state_dir=/var/lib/tailnet"
 
       # Global configuration
-      - "tsbridge.global.metrics_addr=:9090"
-      - "tsbridge.global.read_header_timeout=30s"
-      - "tsbridge.global.write_timeout=30s"
-      - "tsbridge.global.idle_timeout=120s"
-      - "tsbridge.global.access_log=true"
+      - "tailnet.global.metrics_addr=:9090"
+      - "tailnet.global.read_header_timeout=30s"
+      - "tailnet.global.write_timeout=30s"
+      - "tailnet.global.idle_timeout=120s"
+      - "tailnet.global.access_log=true"
     environment:
       # Replace with your actual OAuth credentials
       # You can get these from: https://login.tailscale.com/admin/settings/oauth
@@ -32,54 +32,54 @@ services:
     ports:
       - "9090:9090" # Metrics port
 
-  # Backend API service with tsbridge labels
+  # Backend API service with tailnet labels
   api-backend:
     build:
       context: ../backend
       dockerfile: Dockerfile
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     environment:
       - SERVICE_NAME=api
       - PORT=8080
     labels:
-      # Enable tsbridge for this container
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=api"
-      - "tsbridge.service.port=8080"
-      - "tsbridge.service.whois_enabled=true"
-      - "tsbridge.service.whois_timeout=1s"
+      # Enable tailnet for this container
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=api"
+      - "tailnet.service.port=8080"
+      - "tailnet.service.whois_enabled=true"
+      - "tailnet.service.whois_timeout=1s"
       # Add custom headers
-      - "tsbridge.service.upstream_headers.X-Service-Type=api"
-      - "tsbridge.service.downstream_headers.X-Frame-Options=DENY"
+      - "tailnet.service.upstream_headers.X-Service-Type=api"
+      - "tailnet.service.downstream_headers.X-Frame-Options=DENY"
     expose:
       - "8080"
 
-  # Backend Web service with tsbridge labels
+  # Backend Web service with tailnet labels
   web-backend:
     build:
       context: ../backend
       dockerfile: Dockerfile
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     environment:
       - SERVICE_NAME=web
       - PORT=8081
     labels:
-      # Enable tsbridge for this container
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=web"
-      - "tsbridge.service.port=8081"
-      - "tsbridge.service.whois_enabled=true"
+      # Enable tailnet for this container
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=web"
+      - "tailnet.service.port=8081"
+      - "tailnet.service.whois_enabled=true"
       # Custom timeouts for this service
-      - "tsbridge.service.read_header_timeout=60s"
-      - "tsbridge.service.write_timeout=60s"
+      - "tailnet.service.read_header_timeout=60s"
+      - "tailnet.service.write_timeout=60s"
       # Disable access logging for this service
-      - "tsbridge.service.access_log=false"
+      - "tailnet.service.access_log=false"
       # Security headers
-      - "tsbridge.service.downstream_headers.Strict-Transport-Security=max-age=31536000; includeSubDomains"
-      - "tsbridge.service.downstream_headers.X-Content-Type-Options=nosniff"
-      - "tsbridge.service.remove_downstream=Server,X-Powered-By"
+      - "tailnet.service.downstream_headers.Strict-Transport-Security=max-age=31536000; includeSubDomains"
+      - "tailnet.service.downstream_headers.X-Content-Type-Options=nosniff"
+      - "tailnet.service.remove_downstream=Server,X-Powered-By"
 
   # Admin service with Tailscale Funnel enabled
   admin-backend:
@@ -87,23 +87,23 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     networks:
-      - tsbridge-demo
+      - tailnet-demo
     environment:
       - SERVICE_NAME=admin
       - PORT=9000
     labels:
-      # Enable tsbridge for this container
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=admin"
-      - "tsbridge.service.port=9000"
-      - "tsbridge.service.whois_enabled=true"
-      #- "tsbridge.service.funnel_enabled=true"  # Expose via Tailscale Funnel
-      - "tsbridge.service.ephemeral=false"
+      # Enable tailnet for this container
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=admin"
+      - "tailnet.service.port=9000"
+      - "tailnet.service.whois_enabled=true"
+      #- "tailnet.service.funnel_enabled=true"  # Expose via Tailscale Funnel
+      - "tailnet.service.ephemeral=false"
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
     driver: local
 
 networks:
-  tsbridge-demo:
+  tailnet-demo:
     driver: bridge

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,10 +68,10 @@ func TestParseDuration(t *testing.T) {
 func TestDockerZeroDurationParsing(t *testing.T) {
 	t.Run("zero duration from Docker label", func(t *testing.T) {
 		labels := map[string]string{
-			"tsbridge.service.write_timeout": "0s",
+			"tailnet.service.write_timeout": "0s",
 		}
 
-		parser := newLabelParser(labels, "tsbridge")
+		parser := newLabelParser(labels, "tailnet")
 		duration := parser.getDuration("service.write_timeout")
 
 		require.NotNil(t, duration)
@@ -83,7 +83,7 @@ func TestDockerZeroDurationParsing(t *testing.T) {
 			// write_timeout not set
 		}
 
-		parser := newLabelParser(labels, "tsbridge")
+		parser := newLabelParser(labels, "tailnet")
 		duration := parser.getDuration("service.write_timeout")
 
 		assert.Nil(t, duration)
@@ -244,15 +244,15 @@ func TestParseStringSlice(t *testing.T) {
 
 func TestLabelParser(t *testing.T) {
 	labels := map[string]string{
-		"tsbridge.service.name":                "test-service",
-		"tsbridge.service.whois_enabled":       "true",
-		"tsbridge.service.read_header_timeout": "30s",
-		"tsbridge.service.remove_upstream":     "X-Forwarded-For,X-Real-IP",
+		"tailnet.service.name":                "test-service",
+		"tailnet.service.whois_enabled":       "true",
+		"tailnet.service.read_header_timeout": "30s",
+		"tailnet.service.remove_upstream":     "X-Forwarded-For,X-Real-IP",
 	}
 
 	parser := &labelParser{
 		labels: labels,
-		prefix: "tsbridge",
+		prefix: "tailnet",
 	}
 
 	t.Run("getString", func(t *testing.T) {
@@ -314,46 +314,46 @@ func TestHeaderInjectionVulnerabilities(t *testing.T) {
 		{
 			name: "CRLF injection in header value",
 			labels: map[string]string{
-				"tsbridge.service.upstream_headers.X-Custom": "value\r\nX-Injected: malicious",
+				"tailnet.service.upstream_headers.X-Custom": "value\r\nX-Injected: malicious",
 			},
 			invalidHeaders: []string{"X-Custom"},
 		},
 		{
 			name: "CRLF injection with various newline combinations",
 			labels: map[string]string{
-				"tsbridge.service.upstream_headers.X-Test1": "value\rinjected",
-				"tsbridge.service.upstream_headers.X-Test2": "value\ninjected",
-				"tsbridge.service.upstream_headers.X-Test3": "value\r\ninjected",
+				"tailnet.service.upstream_headers.X-Test1": "value\rinjected",
+				"tailnet.service.upstream_headers.X-Test2": "value\ninjected",
+				"tailnet.service.upstream_headers.X-Test3": "value\r\ninjected",
 			},
 			invalidHeaders: []string{"X-Test1", "X-Test2", "X-Test3"},
 		},
 		{
 			name: "Invalid header names with special characters",
 			labels: map[string]string{
-				"tsbridge.service.upstream_headers.X-Test space":     "value",
-				"tsbridge.service.upstream_headers.X-Test:colon":     "value",
-				"tsbridge.service.upstream_headers.X-Test;semicolon": "value",
-				"tsbridge.service.upstream_headers.X-Test(paren":     "value",
-				"tsbridge.service.upstream_headers.X-Test\"quote":    "value",
+				"tailnet.service.upstream_headers.X-Test space":     "value",
+				"tailnet.service.upstream_headers.X-Test:colon":     "value",
+				"tailnet.service.upstream_headers.X-Test;semicolon": "value",
+				"tailnet.service.upstream_headers.X-Test(paren":     "value",
+				"tailnet.service.upstream_headers.X-Test\"quote":    "value",
 			},
 			invalidHeaders: []string{"X-Test space", "X-Test:colon", "X-Test;semicolon", "X-Test(paren", "X-Test\"quote"},
 		},
 		{
 			name: "Control characters in header values",
 			labels: map[string]string{
-				"tsbridge.service.upstream_headers.X-Control": "value\x00null",
-				"tsbridge.service.upstream_headers.X-Tab":     "value\ttab",
-				"tsbridge.service.upstream_headers.X-Bell":    "value\x07bell",
+				"tailnet.service.upstream_headers.X-Control": "value\x00null",
+				"tailnet.service.upstream_headers.X-Tab":     "value\ttab",
+				"tailnet.service.upstream_headers.X-Bell":    "value\x07bell",
 			},
 			invalidHeaders: []string{"X-Control", "X-Tab", "X-Bell"},
 		},
 		{
 			name: "Valid headers that should pass",
 			labels: map[string]string{
-				"tsbridge.service.upstream_headers.X-Custom-Header": "valid-value",
-				"tsbridge.service.upstream_headers.Authorization":   "Bearer token123",
-				"tsbridge.service.upstream_headers.X-Request-ID":    "12345-67890",
-				"tsbridge.service.upstream_headers.Accept-Language": "en-US,en;q=0.9",
+				"tailnet.service.upstream_headers.X-Custom-Header": "valid-value",
+				"tailnet.service.upstream_headers.Authorization":   "Bearer token123",
+				"tailnet.service.upstream_headers.X-Request-ID":    "12345-67890",
+				"tailnet.service.upstream_headers.Accept-Language": "en-US,en;q=0.9",
 			},
 			invalidHeaders: []string{}, // All should be valid
 		},
@@ -361,7 +361,7 @@ func TestHeaderInjectionVulnerabilities(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := newLabelParser(tt.labels, "tsbridge")
+			parser := newLabelParser(tt.labels, "tailnet")
 
 			headers := parser.getHeaders("service.upstream_headers")
 
@@ -467,7 +467,7 @@ func TestValidateHeaderValue(t *testing.T) {
 // TestParseServiceConfigBackendValidation tests that backend address validation is applied
 func TestParseServiceConfigBackendValidation(t *testing.T) {
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	tests := []struct {
@@ -479,18 +479,18 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 		{
 			name: "valid backend address",
 			labels: map[string]string{
-				"tsbridge.enabled":              "true",
-				"tsbridge.service.name":         "test-service",
-				"tsbridge.service.backend_addr": "localhost:8080",
+				"tailnet.enabled":              "true",
+				"tailnet.service.name":         "test-service",
+				"tailnet.service.backend_addr": "localhost:8080",
 			},
 			shouldError: false,
 		},
 		{
 			name: "invalid port rejected",
 			labels: map[string]string{
-				"tsbridge.enabled":              "true",
-				"tsbridge.service.name":         "test-service",
-				"tsbridge.service.backend_addr": "localhost:70000",
+				"tailnet.enabled":              "true",
+				"tailnet.service.name":         "test-service",
+				"tailnet.service.backend_addr": "localhost:70000",
 			},
 			shouldError: true,
 			errorMsg:    "port in backend address must be between 1 and 65535",
@@ -498,9 +498,9 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 		{
 			name: "unix socket path traversal rejected",
 			labels: map[string]string{
-				"tsbridge.enabled":              "true",
-				"tsbridge.service.name":         "test-service",
-				"tsbridge.service.backend_addr": "unix://../../../etc/passwd",
+				"tailnet.enabled":              "true",
+				"tailnet.service.name":         "test-service",
+				"tailnet.service.backend_addr": "unix://../../../etc/passwd",
 			},
 			shouldError: true,
 			errorMsg:    "invalid unix socket path",
@@ -508,20 +508,20 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 		{
 			name: "insecure_skip_verify with HTTPS backend is valid",
 			labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "https://example.com:8443",
-				"tsbridge.service.insecure_skip_verify": "true",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "https://example.com:8443",
+				"tailnet.service.insecure_skip_verify": "true",
 			},
 			shouldError: false,
 		},
 		{
 			name: "insecure_skip_verify with HTTP backend is rejected",
 			labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "http://example.com:8080",
-				"tsbridge.service.insecure_skip_verify": "true",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "http://example.com:8080",
+				"tailnet.service.insecure_skip_verify": "true",
 			},
 			shouldError: true,
 			errorMsg:    "insecure_skip_verify is only supported for HTTPS backends",
@@ -529,10 +529,10 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 		{
 			name: "insecure_skip_verify with TCP backend is rejected",
 			labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "localhost:8080",
-				"tsbridge.service.insecure_skip_verify": "true",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "localhost:8080",
+				"tailnet.service.insecure_skip_verify": "true",
 			},
 			shouldError: true,
 			errorMsg:    "insecure_skip_verify is only supported for HTTPS backends",
@@ -540,10 +540,10 @@ func TestParseServiceConfigBackendValidation(t *testing.T) {
 		{
 			name: "insecure_skip_verify false with HTTP backend is valid",
 			labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "http://example.com:8080",
-				"tsbridge.service.insecure_skip_verify": "false",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "http://example.com:8080",
+				"tailnet.service.insecure_skip_verify": "false",
 			},
 			shouldError: false,
 		},
@@ -637,17 +637,17 @@ func TestConfigParityBetweenTOMLAndDocker(t *testing.T) {
 
 func TestDockerInsecureSkipVerifyParsing(t *testing.T) {
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	t.Run("insecure_skip_verify true", func(t *testing.T) {
 		container := container.Summary{
 			Names: []string{"/test-container"},
 			Labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "https://self-signed.example.com",
-				"tsbridge.service.insecure_skip_verify": "true",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "https://self-signed.example.com",
+				"tailnet.service.insecure_skip_verify": "true",
 			},
 		}
 
@@ -662,10 +662,10 @@ func TestDockerInsecureSkipVerifyParsing(t *testing.T) {
 		container := container.Summary{
 			Names: []string{"/test-container"},
 			Labels: map[string]string{
-				"tsbridge.enabled":                      "true",
-				"tsbridge.service.name":                 "test-service",
-				"tsbridge.service.backend_addr":         "https://example.com",
-				"tsbridge.service.insecure_skip_verify": "false",
+				"tailnet.enabled":                      "true",
+				"tailnet.service.name":                 "test-service",
+				"tailnet.service.backend_addr":         "https://example.com",
+				"tailnet.service.insecure_skip_verify": "false",
 			},
 		}
 
@@ -680,9 +680,9 @@ func TestDockerInsecureSkipVerifyParsing(t *testing.T) {
 		container := container.Summary{
 			Names: []string{"/test-container"},
 			Labels: map[string]string{
-				"tsbridge.enabled":              "true",
-				"tsbridge.service.name":         "test-service",
-				"tsbridge.service.backend_addr": "https://example.com",
+				"tailnet.enabled":              "true",
+				"tailnet.service.name":         "test-service",
+				"tailnet.service.backend_addr": "https://example.com",
 			},
 		}
 
@@ -770,15 +770,15 @@ func getDockerParsedTailscaleFields() map[string]bool {
 // TestDockerControlURLParsing tests that control_url is properly parsed from Docker labels
 func TestDockerControlURLParsing(t *testing.T) {
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	container := &container.Summary{
-		Names: []string{"/tsbridge"},
+		Names: []string{"/tailnet"},
 		Labels: map[string]string{
-			"tsbridge.tailscale.oauth_client_id":     "test-client-id",
-			"tsbridge.tailscale.oauth_client_secret": "test-secret",
-			"tsbridge.tailscale.control_url":         "https://headscale.example.com",
+			"tailnet.tailscale.oauth_client_id":     "test-client-id",
+			"tailnet.tailscale.oauth_client_secret": "test-secret",
+			"tailnet.tailscale.control_url":         "https://headscale.example.com",
 		},
 	}
 
@@ -792,7 +792,7 @@ func TestDockerControlURLParsing(t *testing.T) {
 
 func TestDockerOAuthPreauthorizedParsing(t *testing.T) {
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	tests := []struct {
@@ -809,11 +809,11 @@ func TestDockerOAuthPreauthorizedParsing(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			labels := map[string]string{}
 			if tt.labelValue != "" {
-				labels["tsbridge.tailscale.oauth_preauthorized"] = tt.labelValue
+				labels["tailnet.tailscale.oauth_preauthorized"] = tt.labelValue
 			}
 
 			container := &container.Summary{
-				Names:  []string{"/tsbridge"},
+				Names:  []string{"/tailnet"},
 				Labels: labels,
 			}
 
@@ -833,7 +833,7 @@ func TestDockerOAuthPreauthorizedParsing(t *testing.T) {
 
 func TestDockerServiceOAuthPreauthorizedParsing(t *testing.T) {
 	provider := &Provider{
-		labelPrefix: "tsbridge",
+		labelPrefix: "tailnet",
 	}
 
 	tests := []struct {
@@ -849,11 +849,11 @@ func TestDockerServiceOAuthPreauthorizedParsing(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			labels := map[string]string{
-				"tsbridge.enabled":      "true",
-				"tsbridge.service.port": "8080",
+				"tailnet.enabled":      "true",
+				"tailnet.service.port": "8080",
 			}
 			if tt.labelValue != "" {
-				labels["tsbridge.service.oauth_preauthorized"] = tt.labelValue
+				labels["tailnet.service.oauth_preauthorized"] = tt.labelValue
 			}
 
 			container := container.Summary{

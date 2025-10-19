@@ -1,4 +1,4 @@
-// Package main provides the tsbridge CLI application for managing Tailscale proxy services.
+// Package main provides the tailnet CLI application for managing Tailscale proxy services.
 package main
 
 import (
@@ -12,10 +12,10 @@ import (
 
 	"log/slog"
 
-	"github.com/jtdowney/tsbridge/internal/app"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/docker"
+	"github.com/sudosu404/tailnet-cli/internal/app"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/docker"
 )
 
 var version = "dev"
@@ -54,13 +54,13 @@ type cliArgs struct {
 
 // parseCLIArgs parses command-line arguments and returns the parsed values
 func parseCLIArgs(args []string) (*cliArgs, error) {
-	fs := flag.NewFlagSet("tsbridge", flag.ContinueOnError)
+	fs := flag.NewFlagSet("tailnet", flag.ContinueOnError)
 
 	result := &cliArgs{}
 	fs.StringVar(&result.configPath, "config", "", "Path to TOML configuration file (required for file provider)")
 	fs.StringVar(&result.provider, "provider", "file", "Configuration provider (file or docker)")
 	fs.StringVar(&result.dockerEndpoint, "docker-socket", "", "Docker socket endpoint (default: unix:///var/run/docker.sock)")
-	fs.StringVar(&result.labelPrefix, "docker-label-prefix", "tsbridge", "Docker label prefix for configuration")
+	fs.StringVar(&result.labelPrefix, "docker-label-prefix", "tailnet", "Docker label prefix for configuration")
 	fs.BoolVar(&result.verbose, "verbose", false, "Enable debug logging")
 	fs.BoolVar(&result.help, "help", false, "Show usage information")
 	fs.BoolVar(&result.help, "h", false, "Show usage information")
@@ -185,7 +185,7 @@ func run(args *cliArgs, sigCh <-chan os.Signal) error {
 	}
 
 	if args.version {
-		fmt.Printf("tsbridge version: %s\n", version)
+		fmt.Printf("tailnet version: %s\n", version)
 		return nil
 	}
 
@@ -199,7 +199,7 @@ func run(args *cliArgs, sigCh <-chan os.Signal) error {
 		return err
 	}
 
-	slog.Info("starting tsbridge", "version", version, "provider", args.provider)
+	slog.Info("starting tailnet", "version", version, "provider", args.provider)
 
 	// Create configuration provider
 	configProvider, err := createProvider(args)

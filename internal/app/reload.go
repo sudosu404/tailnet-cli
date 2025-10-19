@@ -3,8 +3,8 @@ package app
 import (
 	"log/slog"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 )
 
 // serviceRegistryOps is the minimal interface for dynamic config reloads.

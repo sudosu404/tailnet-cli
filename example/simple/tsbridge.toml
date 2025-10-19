@@ -1,12 +1,12 @@
-# Example tsbridge configuration for Docker Compose demo
+# Example tailnet configuration for Docker Compose demo
 
 [tailscale]
 # OAuth credentials are provided via environment variables
 oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
 oauth_client_secret_env = "TS_OAUTH_CLIENT_SECRET"
-state_dir = "/var/lib/tsbridge"
+state_dir = "/var/lib/tailnet"
 # Default tags for all services (can be overridden per-service)
-default_tags = ["tag:tsbridge", "tag:proxy"]
+default_tags = ["tag:tailnet", "tag:proxy"]
 # Control server URL (optional - defaults to Tailscale's control servers)
 # Uncomment to use a custom control server like Headscale
 # control_url = "https://headscale.example.com"

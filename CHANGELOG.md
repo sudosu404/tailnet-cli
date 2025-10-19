@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to tsbridge will be documented in this file.
+All notable changes to tailnet will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Improved Docker container self-discovery by listing all containers instead of relying on Docker's ID filter (#70)
-  - Fixes issues where tsbridge couldn't find its own container in certain Docker environments
+  - Fixes issues where tailnet couldn't find its own container in certain Docker environments
   - Improves compatibility with different container runtime configurations
   - Thanks to @korpa and @rbollampally for their help identifying the issue and testing the fix
 
@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - tsnet logging adapters to reduce log noise (#64)
   - Improved log output readability by filtering tsnet internal logs
-  - Better separation of tsbridge logs from underlying tsnet logs
+  - Better separation of tailnet logs from underlying tsnet logs
 
 ### Changed
 
@@ -437,7 +437,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically discover and configure services from Docker container labels
   - Hot-reload configuration when container labels change
   - Similar to Traefik's label-based configuration approach
-  - Support for all existing tsbridge configuration options via labels
+  - Support for all existing tailnet configuration options via labels
   - Security validation for headers and backend addresses
   - Comprehensive documentation and examples in `docs/docker-labels.md`
   - Example Docker Compose configuration in `example/docker-compose-labels.yml`
@@ -470,26 +470,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of tsbridge - a lightweight proxy manager built on Tailscale's tsnet library
+- Initial release of tailnet - a lightweight proxy manager built on Tailscale's tsnet library
 
-[0.12.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.12.1
-[0.12.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.12.0
-[0.11.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.1
-[0.11.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.11.0
-[0.10.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.1
-[0.10.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.10.0
-[0.9.2]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.2
-[0.9.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.1
-[0.9.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.9.0
-[0.8.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.8.0
-[0.7.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.1
-[0.7.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.7.0
-[0.6.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.1
-[0.6.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.6.0
-[0.5.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.5.0
-[0.4.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.1
-[0.4.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.4.0
-[0.3.1]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.1
-[0.3.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.3.0
-[0.2.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.2.0
-[0.1.0]: https://github.com/jtdowney/tsbridge/releases/tag/v0.1.0
+[0.12.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.12.1
+[0.12.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.12.0
+[0.11.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.11.1
+[0.11.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.11.0
+[0.10.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.10.1
+[0.10.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.10.0
+[0.9.2]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.9.2
+[0.9.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.9.1
+[0.9.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.9.0
+[0.8.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.8.0
+[0.7.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.7.1
+[0.7.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.7.0
+[0.6.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.6.1
+[0.6.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.6.0
+[0.5.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.5.0
+[0.4.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.4.1
+[0.4.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.4.0
+[0.3.1]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.3.1
+[0.3.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.3.0
+[0.2.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.2.0
+[0.1.0]: https://github.com/sudosu404/tailnet-cli/releases/tag/v0.1.0

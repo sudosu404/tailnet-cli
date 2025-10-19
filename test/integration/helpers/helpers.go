@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 	"github.com/stretchr/testify/require"
 )
 
@@ -147,15 +147,15 @@ func CreateMultiServiceConfig(t *testing.T, services map[string]string) *config.
 	return cfg
 }
 
-// BuildTestBinary builds the tsbridge binary for testing.
+// BuildTestBinary builds the tailnet binary for testing.
 func BuildTestBinary(t *testing.T) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
-	binPath := filepath.Join(tmpDir, "tsbridge")
+	binPath := filepath.Join(tmpDir, "tailnet")
 
 	// Build using relative path from test directory
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("failed to build binary: %v\n%s", err, output)
@@ -164,7 +164,7 @@ func BuildTestBinary(t *testing.T) string {
 	return binPath
 }
 
-// TSBridgeProcess wraps an exec.Cmd for tsbridge with helper methods.
+// TSBridgeProcess wraps an exec.Cmd for tailnet with helper methods.
 type TSBridgeProcess struct {
 	cmd        *exec.Cmd
 	outputChan chan string
@@ -173,7 +173,7 @@ type TSBridgeProcess struct {
 	output     string
 }
 
-// StartTSBridge starts a tsbridge process with common setup.
+// StartTSBridge starts a tailnet process with common setup.
 func StartTSBridge(t *testing.T, configPath string, extraEnv ...string) *TSBridgeProcess {
 	t.Helper()
 
@@ -199,7 +199,7 @@ func StartTSBridge(t *testing.T, configPath string, extraEnv ...string) *TSBridg
 
 	// Start the process
 	err = cmd.Start()
-	require.NoError(t, err, "failed to start tsbridge")
+	require.NoError(t, err, "failed to start tailnet")
 
 	// Read output in goroutine
 	outputChan := make(chan string, 1)
@@ -225,7 +225,7 @@ func StartTSBridge(t *testing.T, configPath string, extraEnv ...string) *TSBridg
 	return process
 }
 
-// Shutdown gracefully shuts down the tsbridge process.
+// Shutdown gracefully shuts down the tailnet process.
 func (p *TSBridgeProcess) Shutdown() {
 	p.t.Helper()
 
@@ -249,12 +249,12 @@ func (p *TSBridgeProcess) Shutdown() {
 	case <-done:
 		// Process exited
 	case <-time.After(5 * time.Second):
-		p.t.Log("tsbridge did not shut down within timeout, killing")
+		p.t.Log("tailnet did not shut down within timeout, killing")
 		_ = p.cmd.Process.Kill()
 	}
 }
 
-// WaitForStartup waits for the tsbridge process to complete initial startup.
+// WaitForStartup waits for the tailnet process to complete initial startup.
 // This is more reliable than a fixed sleep and makes tests less flaky.
 func (p *TSBridgeProcess) WaitForStartup() {
 	p.t.Helper()

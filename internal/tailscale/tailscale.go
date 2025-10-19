@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/constants"
-	tserrors "github.com/jtdowney/tsbridge/internal/errors"
-	tsnetpkg "github.com/jtdowney/tsbridge/internal/tsnet"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	tserrors "github.com/sudosu404/tailnet-cli/internal/errors"
+	tsnetpkg "github.com/sudosu404/tailnet-cli/internal/tsnet"
 )
 
-// Server wraps a tsnet.Server with tsbridge-specific functionality
+// Server wraps a tsnet.Server with tailnet-specific functionality
 type Server struct {
 	config config.Tailscale
 	// serviceServers holds the tsnet.Server instance for each service
@@ -419,7 +419,7 @@ func ValidateTailscaleSecrets(cfg config.Tailscale) error {
 // getDefaultStateDir returns the default state directory using platform-specific paths
 func getDefaultStateDir() string {
 	// Use XDG data directory which handles cross-platform paths correctly
-	return filepath.Join(xdg.DataHome, "tsbridge")
+	return filepath.Join(xdg.DataHome, "tailnet")
 }
 
 // primeCertificate makes an HTTPS request to the service to trigger certificate provisioning with timeout

@@ -1,10 +1,10 @@
-# tsbridge Project Instructions
+# tailnet Project Instructions
 
-This document contains project-specific instructions for working on the tsbridge codebase.
+This document contains project-specific instructions for working on the tailnet codebase.
 
 ## Project Overview
 
-tsbridge is a Go-based proxy manager built on Tailscale's tsnet library. It allows multiple named services on a Tailnet to be configured via a single TOML file.
+tailnet is a Go-based proxy manager built on Tailscale's tsnet library. It allows multiple named services on a Tailnet to be configured via a single TOML file.
 
 ## Testing Commands
 
@@ -23,9 +23,9 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library. It allo
 
 ## Build Commands
 
-- Build binary: `go build -o tsbridge ./cmd/tsbridge`
-- Build with version info: `go build -ldflags "-X main.version=$(git describe --tags --always)" -o tsbridge ./cmd/tsbridge`
-- Cross-compile for Linux: `GOOS=linux GOARCH=amd64 go build -o tsbridge-linux-amd64 ./cmd/tsbridge`
+- Build binary: `go build -o tailnet ./cmd/tailnet`
+- Build with version info: `go build -ldflags "-X main.version=$(git describe --tags --always)" -o tailnet ./cmd/tailnet`
+- Cross-compile for Linux: `GOOS=linux GOARCH=amd64 go build -o tailnet-linux-amd64 ./cmd/tailnet`
 - Use Makefile: `make build` (automatically includes git SHA as version)
 
 ## Development Workflow
@@ -41,8 +41,8 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library. It allo
 ## Project Structure
 
 ```
-tsbridge/
-├── cmd/tsbridge/        # Main application entry point
+tailnet/
+├── cmd/tailnet/        # Main application entry point
 ├── internal/            # Internal packages
 │   ├── app/            # Application lifecycle management
 │   ├── config/         # Configuration parsing and validation
@@ -174,10 +174,10 @@ The project includes a Makefile with these targets:
 - For complex packages, use multi-line comments with additional context
 - Examples:
   ```go
-  // Package config handles configuration parsing and validation for tsbridge.
+  // Package config handles configuration parsing and validation for tailnet.
   package config
   
-  // Package errors provides standardized error types and handling for tsbridge.
+  // Package errors provides standardized error types and handling for tailnet.
   // It implements error classification, wrapping, and utility functions for
   // consistent error handling across the codebase.
   package errors

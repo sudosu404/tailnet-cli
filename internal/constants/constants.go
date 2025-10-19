@@ -1,4 +1,4 @@
-// Package constants defines common constants used throughout the tsbridge application.
+// Package constants defines common constants used throughout the tailnet application.
 package constants
 
 import "time"

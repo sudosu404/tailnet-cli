@@ -1,19 +1,19 @@
-# tsbridge Threat Model
+# tailnet Threat Model
 
 ## Overview
 
-tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designed to expose multiple services on a Tailnet through a single configuration file. This document outlines the security considerations, intended use cases, and known limitations.
+tailnet is a Go-based proxy manager built on Tailscale's tsnet library, designed to expose multiple services on a Tailnet through a single configuration file. This document outlines the security considerations, intended use cases, and known limitations.
 
 ## Intended Use Case
 
-**tsbridge is designed for relatively trusted environments such as:**
+**tailnet is designed for relatively trusted environments such as:**
 
 - Home labs
 - Personal development environments
 - Small team internal networks
 - Testing and staging environments
 
-**tsbridge is NOT designed for:**
+**tailnet is NOT designed for:**
 
 - Security-critical production environments
 - Public-facing internet services
@@ -27,7 +27,7 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 1. **Tailscale Network**: The Tailnet is considered trusted; all nodes authenticated via Tailscale are trusted
 2. **Configuration Source**: The TOML configuration file or Docker labels are trusted inputs
 3. **Backend Services**: All configured backend services are trusted
-4. **Host System**: The system running tsbridge is fully trusted
+4. **Host System**: The system running tailnet is fully trusted
 
 ### Untrusted Components
 
@@ -39,13 +39,13 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 ### Authentication & Authorization
 
 - **Primary Security**: Relies entirely on Tailscale's authentication and network security
-- **No Additional Auth**: tsbridge does not implement its own authentication layer
+- **No Additional Auth**: tailnet does not implement its own authentication layer
 - **Network-Level Security**: Security is enforced at the network level via Tailscale ACLs
 
 ### Data Protection
 
 - **Encryption in Transit**: Provided by Tailscale's WireGuard implementation
-- **No Data at Rest**: tsbridge does not store persistent data
+- **No Data at Rest**: tailnet does not store persistent data
 - **Secret Management**:
   - OAuth credentials can be provided via files or environment variables
   - Secrets are redacted in logs but held in memory unencrypted
@@ -54,14 +54,14 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 
 ### 1. Proxy Trust Model
 
-- tsbridge acts as a reverse proxy with full access to request/response data
+- tailnet acts as a reverse proxy with full access to request/response data
 - No request filtering or sanitization is performed
 - All headers (except `Host`) are forwarded as-is
 - Response bodies are streamed without inspection
 
 ### 2. Service Exposure
 
-- Any service configured in tsbridge is accessible to all Tailnet members (subject to Tailscale ACLs)
+- Any service configured in tailnet is accessible to all Tailnet members (subject to Tailscale ACLs)
 - No per-service authentication is implemented
 - Funnel mode exposes services to the public internet (use with extreme caution)
 
@@ -89,7 +89,7 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 ### Out of Scope Threats
 
 1. **Malicious Backend Services**: Compromised backend services
-2. **Host System Compromise**: Root access to tsbridge host
+2. **Host System Compromise**: Root access to tailnet host
 3. **Tailscale Infrastructure Compromise**: Issues with Tailscale's security
 4. **Side-Channel Attacks**: Timing attacks, cache attacks, etc.
 5. **Supply Chain Attacks**: Compromised dependencies
@@ -98,7 +98,7 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 
 ### Deployment
 
-1. Run tsbridge with minimal privileges
+1. Run tailnet with minimal privileges
 2. Use a dedicated service account
 3. Restrict configuration file permissions
 4. Enable access logging for audit trails
@@ -125,14 +125,14 @@ tsbridge is a Go-based proxy manager built on Tailscale's tsnet library, designe
 
 ## Security Updates
 
-- tsbridge follows Go's security update cycle
+- tailnet follows Go's security update cycle
 - Dependencies are regularly updated
 - Security issues should be reported via GitHub issues (public project)
 - No formal security advisory process exists
 
 ## Disclaimer
 
-tsbridge is provided as-is for use in trusted environments. Users deploying tsbridge accept responsibility for:
+tailnet is provided as-is for use in trusted environments. Users deploying tailnet accept responsibility for:
 
 - Evaluating its suitability for their use case
 - Implementing additional security controls as needed

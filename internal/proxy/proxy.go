@@ -15,10 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/constants"
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/metrics"
-	"github.com/jtdowney/tsbridge/internal/middleware"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/metrics"
+	"github.com/sudosu404/tailnet-cli/internal/middleware"
 )
 
 // TransportConfig holds configuration for the HTTP transport

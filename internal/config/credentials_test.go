@@ -587,8 +587,8 @@ func TestValidateFilePath(t *testing.T) {
 	}{
 		// Valid paths
 		{"/absolute/path/to/file", "/absolute/path/to/file", true},
-		{"/var/lib/tsbridge/secret.txt", "/var/lib/tsbridge/secret.txt", true},
-		{"/etc/tsbridge/config.toml", "/etc/tsbridge/config.toml", true},
+		{"/var/lib/tailnet/secret.txt", "/var/lib/tailnet/secret.txt", true},
+		{"/etc/tailnet/config.toml", "/etc/tailnet/config.toml", true},
 
 		// Invalid paths
 		{"relative path", "relative/path", false},
@@ -600,7 +600,7 @@ func TestValidateFilePath(t *testing.T) {
 		{"just ..", "..", false},
 		{"just .", ".", false},
 		{"path ending with ..", "/path/to/..", false},
-		{"complex traversal", "/var/lib/tsbridge/../../../../../../etc/passwd", false},
+		{"complex traversal", "/var/lib/tailnet/../../../../../../etc/passwd", false},
 	}
 
 	for _, tt := range tests {

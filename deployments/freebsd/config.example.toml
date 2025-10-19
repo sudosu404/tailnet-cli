@@ -1,13 +1,13 @@
-# Example tsbridge configuration for FreeBSD
-# Copy to /usr/local/etc/tsbridge/config.toml and customize
+# Example tailnet configuration for FreeBSD
+# Copy to /usr/local/etc/tailnet/config.toml and customize
 
 # Tailscale authentication configuration (required)
 [tailscale]
 # OAuth authentication (recommended)
 # Resolution order: direct value > file > env var > default env var
 # Store credentials in separate files for security (highest priority after direct values)
-oauth_client_id_file = "/usr/local/etc/tsbridge/oauth_client_id"
-oauth_client_secret_file = "/usr/local/etc/tsbridge/oauth_client_secret"
+oauth_client_id_file = "/usr/local/etc/tailnet/oauth_client_id"
+oauth_client_secret_file = "/usr/local/etc/tailnet/oauth_client_secret"
 
 # Alternative: Use environment variables (lower priority than files)
 # oauth_client_id_env = "TS_OAUTH_CLIENT_ID"
@@ -18,13 +18,13 @@ oauth_client_secret_file = "/usr/local/etc/tsbridge/oauth_client_secret"
 # oauth_client_secret = "tskey-client-..."
 
 # Alternative: Use auth key (not recommended for production)
-# auth_key_file = "/usr/local/etc/tsbridge/auth_key"
+# auth_key_file = "/usr/local/etc/tailnet/auth_key"
 
 # State directory for TSNet data
-state_dir = "/var/db/tsbridge"
+state_dir = "/var/db/tailnet"
 
 # Default tags for all services (required when using OAuth)
-default_tags = ["tag:server", "tag:tsbridge"]
+default_tags = ["tag:server", "tag:tailnet"]
 
 # Control server URL (optional - defaults to Tailscale's control servers)
 # Uncomment to use a custom control server like Headscale
@@ -74,7 +74,7 @@ max_request_body_size = "50MB"  # Override global limit
 
 # Add custom headers
 downstream_headers = { "X-Frame-Options" = "DENY", "X-Content-Type-Options" = "nosniff" }
-upstream_headers = { "X-Forwarded-By" = "tsbridge" }
+upstream_headers = { "X-Forwarded-By" = "tailnet" }
 
 # Internal dashboard
 [[services]]

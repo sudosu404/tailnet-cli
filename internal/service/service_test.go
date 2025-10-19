@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/errors"
-	"github.com/jtdowney/tsbridge/internal/metrics"
-	"github.com/jtdowney/tsbridge/internal/middleware"
-	"github.com/jtdowney/tsbridge/internal/tailscale"
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
-	"github.com/jtdowney/tsbridge/internal/tsnet"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/metrics"
+	"github.com/sudosu404/tailnet-cli/internal/middleware"
+	"github.com/sudosu404/tailnet-cli/internal/tailscale"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/tsnet"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -245,9 +245,9 @@ func TestServiceRegistryErrorTypes(t *testing.T) {
 	})
 
 	t.Run("docker provider zero services scenario", func(t *testing.T) {
-		// This test verifies the Docker provider use case where tsbridge
+		// This test verifies the Docker provider use case where tailnet
 		// starts with zero services and dynamically adds them as containers
-		// with tsbridge labels are started.
+		// with tailnet labels are started.
 		cfg := &config.Config{
 			Global:   config.Global{},
 			Services: []config.Service{}, // No initial services

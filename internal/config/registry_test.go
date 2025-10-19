@@ -327,7 +327,7 @@ func TestDockerProviderFactory(t *testing.T) {
 			name: "valid docker provider options",
 			opts: DockerProviderOptions{
 				DockerEndpoint: "unix:///var/run/docker.sock",
-				LabelPrefix:    "tsbridge",
+				LabelPrefix:    "tailnet",
 			},
 			expectError: false,
 		},

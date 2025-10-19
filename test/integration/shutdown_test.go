@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
-	"github.com/jtdowney/tsbridge/test/integration/helpers"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/test/integration/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +32,7 @@ func TestE2EGracefulShutdown(t *testing.T) {
 	cfg.Global.ShutdownTimeout = testhelpers.DurationPtr(5 * time.Second)
 	configPath := helpers.WriteConfigFile(t, cfg)
 
-	// Start tsbridge process
+	// Start tailnet process
 	process := helpers.StartTSBridge(t, configPath)
 
 	// Get the output (this will trigger shutdown)
@@ -65,7 +65,7 @@ func TestE2EShutdownWithActiveRequests(t *testing.T) {
 	cfg.Global.ShutdownTimeout = testhelpers.DurationPtr(2 * time.Second)
 	configPath := helpers.WriteConfigFile(t, cfg)
 
-	// Start tsbridge process
+	// Start tailnet process
 	process := helpers.StartTSBridge(t, configPath)
 
 	// Track shutdown timing

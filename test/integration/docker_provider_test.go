@@ -24,9 +24,9 @@ func TestDockerProviderIntegration(t *testing.T) {
 		t.Skip("Docker is not available - skipping integration tests")
 	}
 
-	// Build tsbridge binary for testing
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary for testing
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err, "Failed to build test binary")
 
@@ -34,7 +34,7 @@ func TestDockerProviderIntegration(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// Start tsbridge with docker provider
+		// Start tailnet with docker provider
 		cmd := exec.CommandContext(ctx, binPath, "-provider", "docker", "-verbose")
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -49,7 +49,7 @@ func TestDockerProviderIntegration(t *testing.T) {
 		// Check that it started successfully
 		output := stdout.String() + stderr.String()
 		assert.Contains(t, output, "provider=docker")
-		assert.Contains(t, output, "starting tsbridge")
+		assert.Contains(t, output, "starting tailnet")
 
 		// Should handle no services gracefully
 		assert.NotContains(t, output, "panic")
@@ -76,7 +76,7 @@ func TestDockerProviderIntegration(t *testing.T) {
 		cmd := exec.CommandContext(ctx, binPath,
 			"-provider", "docker",
 			"-docker-socket", "unix://"+socketPath,
-			"-docker-label-prefix", "test-tsbridge",
+			"-docker-label-prefix", "test-tailnet",
 			"-verbose")
 
 		var stdout, stderr bytes.Buffer
@@ -91,7 +91,7 @@ func TestDockerProviderIntegration(t *testing.T) {
 
 		output := stdout.String() + stderr.String()
 		assert.Contains(t, output, "provider=docker")
-		assert.Contains(t, output, "test-tsbridge") // Custom label prefix should be used
+		assert.Contains(t, output, "test-tailnet") // Custom label prefix should be used
 
 		// Cleanup
 		cmd.Process.Kill()
@@ -110,9 +110,9 @@ func TestDockerProviderDynamicConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	defer cli.Close()
 
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err = cmd.Run()
 	require.NoError(t, err)
 
@@ -120,13 +120,13 @@ func TestDockerProviderDynamicConfiguration(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		// Start a test HTTP server container with tsbridge labels
-		testContainerName := "tsbridge-test-httpbin-" + time.Now().Format("20060102150405")
+		// Start a test HTTP server container with tailnet labels
+		testContainerName := "tailnet-test-httpbin-" + time.Now().Format("20060102150405")
 		httpbinCmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-d",
 			"--name", testContainerName,
-			"--label", "tsbridge.enabled=true",
-			"--label", "tsbridge.service.name=test-httpbin",
-			"--label", "tsbridge.service.backend_addr="+testContainerName+":8080",
+			"--label", "tailnet.enabled=true",
+			"--label", "tailnet.service.name=test-httpbin",
+			"--label", "tailnet.service.backend_addr="+testContainerName+":8080",
 			"kennethreitz/httpbin")
 
 		containerID, err := httpbinCmd.Output()
@@ -138,7 +138,7 @@ func TestDockerProviderDynamicConfiguration(t *testing.T) {
 			exec.Command("docker", "stop", string(containerID)).Run()
 		}()
 
-		// Start tsbridge with docker provider
+		// Start tailnet with docker provider
 		tsbridgeCmd := exec.CommandContext(ctx, binPath,
 			"-provider", "docker",
 			"-verbose")
@@ -156,7 +156,7 @@ func TestDockerProviderDynamicConfiguration(t *testing.T) {
 			tsbridgeCmd.Wait()
 		}()
 
-		// Wait for tsbridge to detect the container
+		// Wait for tailnet to detect the container
 		time.Sleep(3 * time.Second)
 
 		output := stdout.String() + stderr.String()
@@ -170,19 +170,19 @@ func TestDockerProviderDynamicConfiguration(t *testing.T) {
 		defer cancel()
 
 		// Start test container first
-		testContainerName := "tsbridge-test-removal-" + time.Now().Format("20060102150405")
+		testContainerName := "tailnet-test-removal-" + time.Now().Format("20060102150405")
 		httpbinCmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-d",
 			"--name", testContainerName,
-			"--label", "tsbridge.enabled=true",
-			"--label", "tsbridge.service.name=test-removal",
-			"--label", "tsbridge.service.backend_addr="+testContainerName+":8080",
+			"--label", "tailnet.enabled=true",
+			"--label", "tailnet.service.name=test-removal",
+			"--label", "tailnet.service.backend_addr="+testContainerName+":8080",
 			"kennethreitz/httpbin")
 
 		containerID, err := httpbinCmd.Output()
 		require.NoError(t, err)
 		containerID = bytes.TrimSpace(containerID)
 
-		// Start tsbridge
+		// Start tailnet
 		tsbridgeCmd := exec.CommandContext(ctx, binPath,
 			"-provider", "docker",
 			"-verbose")
@@ -222,9 +222,9 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 		t.Skip("Docker is not available")
 	}
 
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err)
 
@@ -233,12 +233,12 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 		defer cancel()
 
 		// Start container with "enable" label (without 'd')
-		testContainerName := "tsbridge-test-enable-" + time.Now().Format("20060102150405")
+		testContainerName := "tailnet-test-enable-" + time.Now().Format("20060102150405")
 		httpbinCmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-d",
 			"--name", testContainerName,
-			"--label", "tsbridge.enable=true", // Note: "enable" not "enabled"
-			"--label", "tsbridge.service.name=test-enable",
-			"--label", "tsbridge.service.backend_addr="+testContainerName+":8080",
+			"--label", "tailnet.enable=true", // Note: "enable" not "enabled"
+			"--label", "tailnet.service.name=test-enable",
+			"--label", "tailnet.service.backend_addr="+testContainerName+":8080",
 			"kennethreitz/httpbin")
 
 		containerID, err := httpbinCmd.Output()
@@ -250,7 +250,7 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 			exec.Command("docker", "stop", string(containerID)).Run()
 		}()
 
-		// Start tsbridge
+		// Start tailnet
 		tsbridgeCmd := exec.CommandContext(ctx, binPath,
 			"-provider", "docker",
 			"-verbose")
@@ -282,7 +282,7 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 
 		// Start container with custom label prefix
 		customPrefix := "myapp"
-		testContainerName := "tsbridge-test-custom-" + time.Now().Format("20060102150405")
+		testContainerName := "tailnet-test-custom-" + time.Now().Format("20060102150405")
 		httpbinCmd := exec.CommandContext(ctx, "docker", "run", "--rm", "-d",
 			"--name", testContainerName,
 			"--label", customPrefix+".enabled=true",
@@ -299,7 +299,7 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 			exec.Command("docker", "stop", string(containerID)).Run()
 		}()
 
-		// Start tsbridge with custom label prefix
+		// Start tailnet with custom label prefix
 		tsbridgeCmd := exec.CommandContext(ctx, binPath,
 			"-provider", "docker",
 			"-docker-label-prefix", customPrefix,
@@ -330,9 +330,9 @@ func TestDockerProviderLabelVariations(t *testing.T) {
 
 // TestDockerProviderErrorHandling tests error scenarios
 func TestDockerProviderErrorHandling(t *testing.T) {
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err)
 
@@ -408,9 +408,9 @@ func isDockerAvailable() bool {
 
 // TestDockerProviderValidate tests validation with Docker provider
 func TestDockerProviderValidate(t *testing.T) {
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err)
 
@@ -435,8 +435,8 @@ func TestDockerProviderValidate(t *testing.T) {
 			// Should validate successfully with Docker available
 			// Note: Docker provider allows empty config
 			if err != nil {
-				// If it fails, should be because of missing tsbridge container
-				assert.Contains(t, output, "unable to find tsbridge container")
+				// If it fails, should be because of missing tailnet container
+				assert.Contains(t, output, "unable to find tailnet container")
 			} else {
 				assert.Contains(t, output, "configuration is valid")
 			}

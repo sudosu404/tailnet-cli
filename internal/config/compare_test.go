@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtdowney/tsbridge/internal/testhelpers"
+	"github.com/sudosu404/tailnet-cli/internal/testhelpers"
 	"github.com/stretchr/testify/assert"
 )
 

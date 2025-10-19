@@ -1,6 +1,6 @@
 # Metrics
 
-tsbridge exposes Prometheus metrics for monitoring and alerting.
+tailnet exposes Prometheus metrics for monitoring and alerting.
 
 ## Enabling Metrics
 

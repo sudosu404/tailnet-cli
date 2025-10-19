@@ -57,9 +57,9 @@ func TestTSNetLogAdapter(t *testing.T) {
 			name:          "state path message",
 			serviceName:   "transmission",
 			format:        "tsnet running state path %s",
-			args:          []any{"/var/lib/tsbridge/transmission/tailscaled.state"},
+			args:          []any{"/var/lib/tailnet/transmission/tailscaled.state"},
 			expectedLevel: slog.LevelDebug,
-			expectedMsg:   "tsnet running state path /var/lib/tsbridge/transmission/tailscaled.state",
+			expectedMsg:   "tsnet running state path /var/lib/tailnet/transmission/tailscaled.state",
 			expectedAttrs: map[string]any{
 				"service": "transmission",
 			},

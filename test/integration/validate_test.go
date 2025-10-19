@@ -18,9 +18,9 @@ import (
 
 // TestValidateFlagIntegration tests the -validate flag end-to-end
 func TestValidateFlagIntegration(t *testing.T) {
-	// Build tsbridge binary for testing
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary for testing
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err, "Failed to build test binary")
 
@@ -51,7 +51,7 @@ backend_addr = "localhost:8080"
 [tailscale]
 oauth_client_id = "test-id"
 oauth_client_secret = "test-secret"
-state_dir = "/tmp/tsbridge"
+state_dir = "/tmp/tailnet"
 default_tags = ["tag:prod"]
 
 [global]
@@ -266,9 +266,9 @@ backend_addr = "localhost:8080"
 
 // TestValidateWithDockerProvider tests validation with docker provider
 func TestValidateWithDockerProvider(t *testing.T) {
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err, "Failed to build test binary")
 
@@ -296,9 +296,9 @@ func TestValidateWithDockerProvider(t *testing.T) {
 
 // TestValidateVerboseOutput tests validation with verbose flag
 func TestValidateVerboseOutput(t *testing.T) {
-	// Build tsbridge binary
-	binPath := filepath.Join(t.TempDir(), "tsbridge-test")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tsbridge")
+	// Build tailnet binary
+	binPath := filepath.Join(t.TempDir(), "tailnet-test")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/tailnet")
 	err := cmd.Run()
 	require.NoError(t, err, "Failed to build test binary")
 

@@ -1,6 +1,6 @@
-# FreeBSD Deployment Guide for tsbridge
+# FreeBSD Deployment Guide for tailnet
 
-This guide covers deploying tsbridge on FreeBSD systems using the rc.d init system.
+This guide covers deploying tailnet on FreeBSD systems using the rc.d init system.
 
 ## Prerequisites
 
@@ -12,27 +12,27 @@ This guide covers deploying tsbridge on FreeBSD systems using the rc.d init syst
 
 ### Option 1: Download Pre-built Binary
 
-Download the latest FreeBSD binary from the [releases page](https://github.com/jtdowney/tsbridge/releases):
+Download the latest FreeBSD binary from the [releases page](https://github.com/sudosu404/tailnet-cli/releases):
 
 ```bash
 # For amd64
-fetch https://github.com/jtdowney/tsbridge/releases/latest/download/tsbridge_VERSION_freebsd_amd64.tar.gz
+fetch https://github.com/sudosu404/tailnet-cli/releases/latest/download/tsbridge_VERSION_freebsd_amd64.tar.gz
 tar -xzf tsbridge_VERSION_freebsd_amd64.tar.gz
-install -m 755 tsbridge /usr/local/bin/
+install -m 755 tailnet /usr/local/bin/
 
 # For arm64
-fetch https://github.com/jtdowney/tsbridge/releases/latest/download/tsbridge_VERSION_freebsd_arm64.tar.gz
+fetch https://github.com/sudosu404/tailnet-cli/releases/latest/download/tsbridge_VERSION_freebsd_arm64.tar.gz
 tar -xzf tsbridge_VERSION_freebsd_arm64.tar.gz
-install -m 755 tsbridge /usr/local/bin/
+install -m 755 tailnet /usr/local/bin/
 ```
 
 ### Option 2: Build from Source
 
 ```bash
-git clone https://github.com/jtdowney/tsbridge.git
-cd tsbridge
+git clone https://github.com/sudosu404/tailnet-cli.git
+cd tailnet
 make build
-install -m 755 tsbridge /usr/local/bin/
+install -m 755 tailnet /usr/local/bin/
 ```
 
 ## System Setup
@@ -40,21 +40,21 @@ install -m 755 tsbridge /usr/local/bin/
 ### 1. Create User and Group
 
 ```bash
-# Create tsbridge user and group
-pw groupadd tsbridge
-pw useradd tsbridge -g tsbridge -d /nonexistent -s /usr/sbin/nologin -c "tsbridge daemon"
+# Create tailnet user and group
+pw groupadd tailnet
+pw useradd tailnet -g tailnet -d /nonexistent -s /usr/sbin/nologin -c "tailnet daemon"
 ```
 
 ### 2. Create Required Directories
 
 ```bash
 # Configuration directory
-install -d -o root -g wheel -m 755 /usr/local/etc/tsbridge
+install -d -o root -g wheel -m 755 /usr/local/etc/tailnet
 
 # Runtime directories (will be created by rc script, but can be pre-created)
-install -d -o tsbridge -g tsbridge -m 750 /var/run/tsbridge
-install -d -o tsbridge -g tsbridge -m 750 /var/log/tsbridge
-install -d -o tsbridge -g tsbridge -m 750 /var/db/tsbridge
+install -d -o tailnet -g tailnet -m 750 /var/run/tailnet
+install -d -o tailnet -g tailnet -m 750 /var/log/tailnet
+install -d -o tailnet -g tailnet -m 750 /var/db/tailnet
 ```
 
 ### 3. Install Configuration
@@ -62,18 +62,18 @@ install -d -o tsbridge -g tsbridge -m 750 /var/db/tsbridge
 Copy the example configuration and customize it:
 
 ```bash
-cp /path/to/tsbridge/deployments/freebsd/config.example.toml /usr/local/etc/tsbridge/config.toml
+cp /path/to/tailnet/deployments/freebsd/config.example.toml /usr/local/etc/tailnet/config.toml
 ```
 
-Basic configuration example at `/usr/local/etc/tsbridge/config.toml`:
+Basic configuration example at `/usr/local/etc/tailnet/config.toml`:
 
 ```toml
 # Tailscale authentication (required)
 [tailscale]
-oauth_client_id_file = "/usr/local/etc/tsbridge/oauth_client_id"
-oauth_client_secret_file = "/usr/local/etc/tsbridge/oauth_client_secret"
-state_dir = "/var/db/tsbridge"
-default_tags = ["tag:server", "tag:tsbridge"]
+oauth_client_id_file = "/usr/local/etc/tailnet/oauth_client_id"
+oauth_client_secret_file = "/usr/local/etc/tailnet/oauth_client_secret"
+state_dir = "/var/db/tailnet"
+default_tags = ["tag:server", "tag:tailnet"]
 
 # Global defaults (optional)
 [global]
@@ -96,21 +96,21 @@ Store your Tailscale OAuth credentials securely:
 
 ```bash
 # Save OAuth client ID
-echo "YOUR_CLIENT_ID" > /usr/local/etc/tsbridge/oauth_client_id
-chmod 600 /usr/local/etc/tsbridge/oauth_client_id
-chown tsbridge:tsbridge /usr/local/etc/tsbridge/oauth_client_id
+echo "YOUR_CLIENT_ID" > /usr/local/etc/tailnet/oauth_client_id
+chmod 600 /usr/local/etc/tailnet/oauth_client_id
+chown tailnet:tailnet /usr/local/etc/tailnet/oauth_client_id
 
 # Save OAuth client secret
-echo "YOUR_CLIENT_SECRET" > /usr/local/etc/tsbridge/oauth_client_secret
-chmod 600 /usr/local/etc/tsbridge/oauth_client_secret
-chown tsbridge:tsbridge /usr/local/etc/tsbridge/oauth_client_secret
+echo "YOUR_CLIENT_SECRET" > /usr/local/etc/tailnet/oauth_client_secret
+chmod 600 /usr/local/etc/tailnet/oauth_client_secret
+chown tailnet:tailnet /usr/local/etc/tailnet/oauth_client_secret
 ```
 
 ### 5. Install rc.d Script
 
 ```bash
 # Copy the rc.d script
-install -m 755 tsbridge /usr/local/etc/rc.d/tsbridge
+install -m 755 tailnet /usr/local/etc/rc.d/tailnet
 ```
 
 ## Service Management
@@ -124,11 +124,11 @@ Add to `/etc/rc.conf`:
 tsbridge_enable="YES"
 
 # Optional: Custom configuration file location
-tsbridge_config="/usr/local/etc/tsbridge/config.toml"
+tsbridge_config="/usr/local/etc/tailnet/config.toml"
 
 # Optional: Run as different user/group
-tsbridge_user="tsbridge"
-tsbridge_group="tsbridge"
+tsbridge_user="tailnet"
+tsbridge_group="tailnet"
 
 # Optional: Additional command line flags
 tsbridge_flags=""
@@ -144,16 +144,16 @@ tsbridge_limits="-n 65535"  # Max file descriptors
 
 ```bash
 # Start the service
-service tsbridge start
+service tailnet start
 
 # Stop the service
-service tsbridge stop
+service tailnet stop
 
 # Check service status
-service tsbridge status
+service tailnet status
 
-# Reload configuration (if supported by tsbridge)
-service tsbridge reload
+# Reload configuration (if supported by tailnet)
+service tailnet reload
 
 # Enable service to start at boot
 sysrc tsbridge_enable="YES"
@@ -168,7 +168,7 @@ sysrc tsbridge_enable="NO"
 
 ```bash
 # Service logs
-tail -f /var/log/tsbridge/tsbridge.log
+tail -f /var/log/tailnet/tailnet.log
 
 # Or use newsyslog for log rotation
 ```
@@ -179,10 +179,10 @@ Install the provided newsyslog configuration:
 
 ```bash
 # Copy the newsyslog configuration
-install -m 644 tsbridge-newsyslog.conf /usr/local/etc/newsyslog.conf.d/tsbridge.conf
+install -m 644 tailnet-newsyslog.conf /usr/local/etc/newsyslog.conf.d/tailnet.conf
 
 # Or if using /etc/newsyslog.conf directly, append the configuration:
-cat tsbridge-newsyslog.conf >> /etc/newsyslog.conf
+cat tailnet-newsyslog.conf >> /etc/newsyslog.conf
 ```
 
 This will rotate logs daily at midnight, keeping 7 days of compressed logs.
@@ -191,13 +191,13 @@ This will rotate logs daily at midnight, keeping 7 days of compressed logs.
 
 ```bash
 # Check if service is running
-service tsbridge status
+service tailnet status
 
 # Check process
-ps aux | grep tsbridge
+ps aux | grep tailnet
 
 # Check network listeners
-sockstat -4 -6 | grep tsbridge
+sockstat -4 -6 | grep tailnet
 ```
 
 ## Security Considerations
@@ -208,22 +208,22 @@ Ensure proper permissions on sensitive files:
 
 ```bash
 # Configuration files
-chmod 644 /usr/local/etc/tsbridge/config.toml
-chmod 600 /usr/local/etc/tsbridge/oauth_client_*
+chmod 644 /usr/local/etc/tailnet/config.toml
+chmod 600 /usr/local/etc/tailnet/oauth_client_*
 
 # Directories
-chmod 750 /var/run/tsbridge
-chmod 750 /var/log/tsbridge
-chmod 750 /var/db/tsbridge
+chmod 750 /var/run/tailnet
+chmod 750 /var/log/tailnet
+chmod 750 /var/db/tailnet
 ```
 
 ### Firewall Configuration
 
-If using `pf`, add rules to allow tsbridge traffic:
+If using `pf`, add rules to allow tailnet traffic:
 
 ```pf
 # /etc/pf.conf
-# Allow tsbridge metrics (if enabled)
+# Allow tailnet metrics (if enabled)
 pass in quick on $int_if proto tcp to port 9100
 
 # Tailscale traffic is handled by tailscale itself
@@ -245,26 +245,26 @@ tsbridge_limits="-n 100000 -u 512"  # Max files: 100k, Max processes: 512
 1. Check configuration syntax:
 
    ```bash
-   /usr/local/bin/tsbridge -config /usr/local/etc/tsbridge/config.toml -validate
+   /usr/local/bin/tailnet -config /usr/local/etc/tailnet/config.toml -validate
    ```
 
 2. Check logs:
 
    ```bash
-   tail -n 50 /var/log/tsbridge/tsbridge.log
+   tail -n 50 /var/log/tailnet/tailnet.log
    ```
 
 3. Verify permissions:
 
    ```bash
-   ls -la /usr/local/etc/tsbridge/
-   ls -la /var/run/tsbridge/
-   ls -la /var/log/tsbridge/
+   ls -la /usr/local/etc/tailnet/
+   ls -la /var/run/tailnet/
+   ls -la /var/log/tailnet/
    ```
 
 4. Run manually for debugging:
    ```bash
-   su -m tsbridge -c '/usr/local/bin/tsbridge -config /usr/local/etc/tsbridge/config.toml -verbose'
+   su -m tailnet -c '/usr/local/bin/tailnet -config /usr/local/etc/tailnet/config.toml -verbose'
    ```
 
 ### Common Issues
@@ -272,7 +272,7 @@ tsbridge_limits="-n 100000 -u 512"  # Max files: 100k, Max processes: 512
 1. **OAuth Authentication Fails**
    - Verify OAuth credentials are correct
    - Check file permissions on credential files
-   - Ensure tsbridge user can read the files
+   - Ensure tailnet user can read the files
 
 2. **Port Already in Use**
    - Check for conflicting services: `sockstat -4 -6 | grep :PORT`
@@ -284,10 +284,10 @@ tsbridge_limits="-n 100000 -u 512"  # Max files: 100k, Max processes: 512
 
 ## Jail Deployment
 
-To run tsbridge in a FreeBSD jail:
+To run tailnet in a FreeBSD jail:
 
 1. Create jail with network access
-2. Install tsbridge inside the jail
+2. Install tailnet inside the jail
 3. Configure as normal, but ensure:
    - Tailscale connectivity works from within the jail
    - Backend services are accessible from the jail network
@@ -295,8 +295,8 @@ To run tsbridge in a FreeBSD jail:
 Example jail configuration in `/etc/jail.conf`:
 
 ```
-tsbridge {
-    host.hostname = tsbridge.local;
+tailnet {
+    host.hostname = tailnet.local;
     ip4.addr = "lo0|10.0.0.10/32";
     ip6 = "new";
     exec.start = "/bin/sh /etc/rc";
@@ -308,16 +308,16 @@ tsbridge {
 
 ## Maintenance
 
-### Updating tsbridge
+### Updating tailnet
 
 1. Download new binary
-2. Stop service: `service tsbridge stop`
-3. Replace binary: `install -m 755 tsbridge /usr/local/bin/`
-4. Start service: `service tsbridge start`
+2. Stop service: `service tailnet stop`
+3. Replace binary: `install -m 755 tailnet /usr/local/bin/`
+4. Start service: `service tailnet start`
 
 ### Backup
 
 Important files to backup:
 
-- `/usr/local/etc/tsbridge/` (configuration and credentials)
-- `/var/db/tsbridge/` (if persistent state is stored)
+- `/usr/local/etc/tailnet/` (configuration and credentials)
+- `/var/db/tailnet/` (if persistent state is stored)

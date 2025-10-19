@@ -5,9 +5,9 @@ before:
     - go mod tidy
 
 builds:
-  - id: tsbridge
-    main: ./cmd/tsbridge
-    binary: tsbridge
+  - id: tailnet
+    main: ./cmd/tailnet
+    binary: tailnet
     goos:
       - linux
       - darwin
@@ -23,7 +23,7 @@ builds:
       - -trimpath
 
 archives:
-  - id: tsbridge
+  - id: tailnet
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats: [tar.gz, zip]
     files:
@@ -32,11 +32,11 @@ archives:
 
 dockers:
   - image_templates:
-      - "ghcr.io/jtdowney/tsbridge:{{ .Tag }}-amd64"
-      - "ghcr.io/jtdowney/tsbridge:latest-amd64"
-      - "ghcr.io/jtdowney/tsbridge:v{{ .Major }}.{{ .Minor }}-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:{{ .Tag }}-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:latest-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:v{{ .Major }}.{{ .Minor }}-amd64"
       # TODO: Uncomment for 1.0.0 release
-      # - "ghcr.io/jtdowney/tsbridge:{{ .Major }}-amd64"
+      # - "ghcr.io/sudosu404/tailnet-cli:{{ .Major }}-amd64"
     dockerfile: Dockerfile
     goos: linux
     goarch: amd64
@@ -46,18 +46,18 @@ dockers:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.description=Tailscale-based reverse proxy manager"
-      - "--label=org.opencontainers.image.url=https://github.com/jtdowney/tsbridge"
-      - "--label=org.opencontainers.image.source=https://github.com/jtdowney/tsbridge"
+      - "--label=org.opencontainers.image.url=https://github.com/sudosu404/tailnet-cli"
+      - "--label=org.opencontainers.image.source=https://github.com/sudosu404/tailnet-cli"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.licenses=MIT"
   - image_templates:
-      - "ghcr.io/jtdowney/tsbridge:{{ .Tag }}-arm64"
-      - "ghcr.io/jtdowney/tsbridge:latest-arm64"
-      - "ghcr.io/jtdowney/tsbridge:v{{ .Major }}.{{ .Minor }}-arm64"
+      - "ghcr.io/sudosu404/tailnet-cli:{{ .Tag }}-arm64"
+      - "ghcr.io/sudosu404/tailnet-cli:latest-arm64"
+      - "ghcr.io/sudosu404/tailnet-cli:v{{ .Major }}.{{ .Minor }}-arm64"
       # TODO: Uncomment for 1.0.0 release
-      # - "ghcr.io/jtdowney/tsbridge:{{ .Major }}-arm64"
+      # - "ghcr.io/sudosu404/tailnet-cli:{{ .Major }}-arm64"
     dockerfile: Dockerfile
     goos: linux
     goarch: arm64
@@ -67,31 +67,31 @@ dockers:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.description=Tailscale-based reverse proxy manager"
-      - "--label=org.opencontainers.image.url=https://github.com/jtdowney/tsbridge"
-      - "--label=org.opencontainers.image.source=https://github.com/jtdowney/tsbridge"
+      - "--label=org.opencontainers.image.url=https://github.com/sudosu404/tailnet-cli"
+      - "--label=org.opencontainers.image.source=https://github.com/sudosu404/tailnet-cli"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.created={{ .Date }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
       - "--label=org.opencontainers.image.licenses=MIT"
 
 docker_manifests:
-  - name_template: "ghcr.io/jtdowney/tsbridge:{{ .Tag }}"
+  - name_template: "ghcr.io/sudosu404/tailnet-cli:{{ .Tag }}"
     image_templates:
-      - "ghcr.io/jtdowney/tsbridge:{{ .Tag }}-amd64"
-      - "ghcr.io/jtdowney/tsbridge:{{ .Tag }}-arm64"
-  - name_template: "ghcr.io/jtdowney/tsbridge:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/sudosu404/tailnet-cli:{{ .Tag }}-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/sudosu404/tailnet-cli:v{{ .Major }}.{{ .Minor }}"
     image_templates:
-      - "ghcr.io/jtdowney/tsbridge:v{{ .Major }}.{{ .Minor }}-amd64"
-      - "ghcr.io/jtdowney/tsbridge:v{{ .Major }}.{{ .Minor }}-arm64"
+      - "ghcr.io/sudosu404/tailnet-cli:v{{ .Major }}.{{ .Minor }}-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:v{{ .Major }}.{{ .Minor }}-arm64"
   # TODO: Uncomment for 1.0.0 release
-  # - name_template: "ghcr.io/jtdowney/tsbridge:{{ .Major }}"
+  # - name_template: "ghcr.io/sudosu404/tailnet-cli:{{ .Major }}"
   #   image_templates:
-  #     - "ghcr.io/jtdowney/tsbridge:{{ .Major }}-amd64"
-  #     - "ghcr.io/jtdowney/tsbridge:{{ .Major }}-arm64"
-  - name_template: "ghcr.io/jtdowney/tsbridge:latest"
+  #     - "ghcr.io/sudosu404/tailnet-cli:{{ .Major }}-amd64"
+  #     - "ghcr.io/sudosu404/tailnet-cli:{{ .Major }}-arm64"
+  - name_template: "ghcr.io/sudosu404/tailnet-cli:latest"
     image_templates:
-      - "ghcr.io/jtdowney/tsbridge:latest-amd64"
-      - "ghcr.io/jtdowney/tsbridge:latest-arm64"
+      - "ghcr.io/sudosu404/tailnet-cli:latest-amd64"
+      - "ghcr.io/sudosu404/tailnet-cli:latest-arm64"
 
 checksum:
   name_template: 'checksums.txt'
@@ -109,8 +109,8 @@ changelog:
 
 release:
   github:
-    owner: jtdowney
-    name: tsbridge
+    owner: hector
+    name: tailnet
   draft: false
   prerelease: auto
   name_template: "{{ .Tag }}"

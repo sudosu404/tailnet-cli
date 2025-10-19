@@ -1,37 +1,37 @@
 # Docker Labels
 
-Run tsbridge in Docker and let it discover services automatically via container labels.
+Run tailnet in Docker and let it discover services automatically via container labels.
 
 ## Quick Example
 
 ```yaml
 services:
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command: ["--provider", "docker"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - tsbridge-state:/var/lib/tsbridge
+      - tailnet-state:/var/lib/tailnet
     environment:
       # Pass the actual OAuth credentials to the container
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     labels:
-      # Tell tsbridge which env vars contain the credentials (not redundant - both are needed)
-      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      - "tsbridge.tailscale.default_tags=tag:server" # Must match or be owned by your OAuth client's tag
+      # Tell tailnet which env vars contain the credentials (not redundant - both are needed)
+      - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tailnet.tailscale.state_dir=/var/lib/tailnet"
+      - "tailnet.tailscale.default_tags=tag:server" # Must match or be owned by your OAuth client's tag
 
   myapp:
     image: myapp:latest
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=myapp"
-      - "tsbridge.service.port=8080"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=myapp"
+      - "tailnet.service.port=8080"
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
 ```
 
 Your app is now at `https://myapp.<tailnet>.ts.net`
@@ -40,27 +40,27 @@ Your app is now at `https://myapp.<tailnet>.ts.net`
 
 ## How It Works
 
-1. tsbridge watches Docker events (no polling!)
-2. When a container with `tsbridge.enabled=true` starts, it creates a proxy
+1. tailnet watches Docker events (no polling!)
+2. When a container with `tailnet.enabled=true` starts, it creates a proxy
 3. When the container stops, the proxy is removed
 4. Changes happen instantly
 
 ## Label Reference
 
-### On tsbridge Container
+### On tailnet Container
 
 ```yaml
 labels:
   # Required: OAuth setup
-  - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-  - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-  - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
+  - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+  - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+  - "tailnet.tailscale.state_dir=/var/lib/tailnet"
 
   # Optional: defaults
-  - "tsbridge.tailscale.default_tags=tag:server,tag:proxy"
-  - "tsbridge.tailscale.oauth_preauthorized=false" # Require manual device approval (default: true)
-  - "tsbridge.global.metrics_addr=:9090"
-  - "tsbridge.global.write_timeout=30s"
+  - "tailnet.tailscale.default_tags=tag:server,tag:proxy"
+  - "tailnet.tailscale.oauth_preauthorized=false" # Require manual device approval (default: true)
+  - "tailnet.global.metrics_addr=:9090"
+  - "tailnet.global.write_timeout=30s"
 ```
 
 ### On Service Containers
@@ -68,19 +68,19 @@ labels:
 ```yaml
 labels:
   # Required
-  - "tsbridge.enabled=true"
+  - "tailnet.enabled=true"
 
   # Service config (pick one)
-  - "tsbridge.service.port=8080" # Recommended
-  - "tsbridge.service.backend_addr=myservice:8080" # If you need specific host
+  - "tailnet.service.port=8080" # Recommended
+  - "tailnet.service.backend_addr=myservice:8080" # If you need specific host
 
   # Optional
-  - "tsbridge.service.name=custom-name" # Default: container name
-  - "tsbridge.service.whois_enabled=true" # Add identity headers
-  - "tsbridge.service.tags=tag:api,tag:prod" # Override default tags
-  - "tsbridge.service.oauth_preauthorized=false" # Override global preauth setting (global default: true)
-  - "tsbridge.service.listen_addr=0.0.0.0:9090" # Custom address and port
-  - "tsbridge.service.insecure_skip_verify=true" # Skip TLS cert verification (HTTPS backends only)
+  - "tailnet.service.name=custom-name" # Default: container name
+  - "tailnet.service.whois_enabled=true" # Add identity headers
+  - "tailnet.service.tags=tag:api,tag:prod" # Override default tags
+  - "tailnet.service.oauth_preauthorized=false" # Override global preauth setting (global default: true)
+  - "tailnet.service.listen_addr=0.0.0.0:9090" # Custom address and port
+  - "tailnet.service.insecure_skip_verify=true" # Skip TLS cert verification (HTTPS backends only)
 ```
 
 ## Backend Address Tips
@@ -89,13 +89,13 @@ labels:
 
 ```yaml
 # Good - uses container name
-- "tsbridge.service.port=8080"
+- "tailnet.service.port=8080"
 
-# Bad - localhost is the tsbridge container!
-- "tsbridge.service.backend_addr=localhost:8080"
+# Bad - localhost is the tailnet container!
+- "tailnet.service.backend_addr=localhost:8080"
 ```
 
-**Why?** In Docker, each container has its own network namespace. `localhost` inside tsbridge doesn't reach your service container.
+**Why?** In Docker, each container has its own network namespace. `localhost` inside tailnet doesn't reach your service container.
 
 ## Advanced Features
 
@@ -104,29 +104,29 @@ labels:
 ```yaml
 labels:
   # Listen on specific address and port
-  - "tsbridge.service.listen_addr=127.0.0.1:9090"
+  - "tailnet.service.listen_addr=127.0.0.1:9090"
 
   # Listen on all interfaces with custom port
-  - "tsbridge.service.listen_addr=0.0.0.0:8080"
+  - "tailnet.service.listen_addr=0.0.0.0:8080"
 
   # Listen on port only (all interfaces)
-  - "tsbridge.service.listen_addr=:8443"
+  - "tailnet.service.listen_addr=:8443"
 ```
 
 ### Streaming/SSE
 
 ```yaml
 labels:
-  - "tsbridge.service.write_timeout=0s" # No timeout
-  - "tsbridge.service.flush_interval=-1ms" # No buffering
+  - "tailnet.service.write_timeout=0s" # No timeout
+  - "tailnet.service.flush_interval=-1ms" # No buffering
 ```
 
 ### Security Headers
 
 ```yaml
 labels:
-  - "tsbridge.service.downstream_headers.X-Frame-Options=DENY"
-  - "tsbridge.service.downstream_headers.Strict-Transport-Security=max-age=31536000"
+  - "tailnet.service.downstream_headers.X-Frame-Options=DENY"
+  - "tailnet.service.downstream_headers.Strict-Transport-Security=max-age=31536000"
 ```
 
 ### Custom Headers
@@ -134,10 +134,10 @@ labels:
 ```yaml
 labels:
   # Add to requests
-  - "tsbridge.service.upstream_headers.X-Service-Name=api"
+  - "tailnet.service.upstream_headers.X-Service-Name=api"
 
   # Remove from responses
-  - "tsbridge.service.remove_downstream=Server,X-Powered-By"
+  - "tailnet.service.remove_downstream=Server,X-Powered-By"
 ```
 
 ### HTTPS Backends
@@ -147,11 +147,11 @@ For connecting to HTTPS backend services:
 ```yaml
 labels:
   # For services with valid certificates
-  - "tsbridge.service.backend_addr=https://api.example.com:443"
+  - "tailnet.service.backend_addr=https://api.example.com:443"
 
   # For services with self-signed certificates (use with caution)
-  - "tsbridge.service.backend_addr=https://internal.lan:8443"
-  - "tsbridge.service.insecure_skip_verify=true"
+  - "tailnet.service.backend_addr=https://internal.lan:8443"
+  - "tailnet.service.insecure_skip_verify=true"
 ```
 
 > **⚠️ Security Warning**: `insecure_skip_verify=true` disables TLS certificate validation. Only use this for trusted internal services with self-signed certificates, as it makes connections vulnerable to attacks.
@@ -160,22 +160,22 @@ labels:
 
 ```yaml
 services:
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command: ["--provider", "docker", "--verbose"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - tsbridge-state:/var/lib/tsbridge
+      - tailnet-state:/var/lib/tailnet
     networks:
       - app-network
     environment:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     labels:
-      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
-      - "tsbridge.tailscale.state_dir=/var/lib/tsbridge"
-      - "tsbridge.global.metrics_addr=:9090"
+      - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tailnet.tailscale.state_dir=/var/lib/tailnet"
+      - "tailnet.global.metrics_addr=:9090"
     ports:
       - "9090:9090" # Metrics
 
@@ -184,23 +184,23 @@ services:
     networks:
       - app-network
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=api"
-      - "tsbridge.service.port=8080"
-      - "tsbridge.service.whois_enabled=true"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=api"
+      - "tailnet.service.port=8080"
+      - "tailnet.service.whois_enabled=true"
 
   web:
     image: myapp/web:latest
     networks:
       - app-network
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=web"
-      - "tsbridge.service.port=3000"
-      - "tsbridge.service.access_log=false"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=web"
+      - "tailnet.service.port=3000"
+      - "tailnet.service.access_log=false"
 
 volumes:
-  tsbridge-state:
+  tailnet-state:
 
 networks:
   app-network:
@@ -210,16 +210,16 @@ networks:
 
 ### Network Requirements
 
-tsbridge and service containers must be on the same Docker network for communication. They don't need to be in the same compose file, but network connectivity is required.
+tailnet and service containers must be on the same Docker network for communication. They don't need to be in the same compose file, but network connectivity is required.
 
 ```yaml
-# tsbridge can forward traffic to service containers only if they share a network
+# tailnet can forward traffic to service containers only if they share a network
 networks:
   app-network:  # Same network name in both files
 
-# In tsbridge compose file
+# In tailnet compose file
 services:
-  tsbridge:
+  tailnet:
     networks:
       - app-network
 
@@ -236,16 +236,16 @@ When everything is in one compose file, Docker automatically creates a shared ne
 
 ```yaml
 services:
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command: ["--provider", "docker"]
     # ... other config
 
   myapp:
     image: myapp:latest
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.port=8080"
+      - "tailnet.enabled=true"
+      - "tailnet.service.port=8080"
 # Both containers automatically share the default network
 ```
 
@@ -256,15 +256,15 @@ For services in separate compose files, use external networks:
 **1. Create the network first:**
 
 ```bash
-docker network create tsbridge-network
+docker network create tailnet-network
 ```
 
-**2. tsbridge-compose.yml:**
+**2. tailnet-compose.yml:**
 
 ```yaml
 services:
-  tsbridge:
-    image: ghcr.io/jtdowney/tsbridge:latest
+  tailnet:
+    image: ghcr.io/sudosu404/tailnet-cli:latest
     command: ["--provider", "docker"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -272,13 +272,13 @@ services:
       - TS_OAUTH_CLIENT_ID=${TS_OAUTH_CLIENT_ID}
       - TS_OAUTH_CLIENT_SECRET=${TS_OAUTH_CLIENT_SECRET}
     labels:
-      - "tsbridge.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
-      - "tsbridge.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
+      - "tailnet.tailscale.oauth_client_id_env=TS_OAUTH_CLIENT_ID"
+      - "tailnet.tailscale.oauth_client_secret_env=TS_OAUTH_CLIENT_SECRET"
     networks:
-      - tsbridge-network
+      - tailnet-network
 
 networks:
-  tsbridge-network:
+  tailnet-network:
     external: true
 ```
 
@@ -289,31 +289,31 @@ services:
   api:
     image: myapi:latest
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=api"
-      - "tsbridge.service.port=8080"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=api"
+      - "tailnet.service.port=8080"
     networks:
-      - tsbridge-network
+      - tailnet-network
 
   web:
     image: myweb:latest
     labels:
-      - "tsbridge.enabled=true"
-      - "tsbridge.service.name=web"
-      - "tsbridge.service.port=3000"
+      - "tailnet.enabled=true"
+      - "tailnet.service.name=web"
+      - "tailnet.service.port=3000"
     networks:
-      - tsbridge-network
+      - tailnet-network
 
 networks:
-  tsbridge-network:
+  tailnet-network:
     external: true
 ```
 
 **4. Start them:**
 
 ```bash
-# Start tsbridge
-docker compose -f tsbridge-compose.yml up -d
+# Start tailnet
+docker compose -f tailnet-compose.yml up -d
 
 # Start services (in any order)
 docker compose -f services-compose.yml up -d
@@ -323,18 +323,18 @@ docker compose -f services-compose.yml up -d
 
 You can also define the network in one compose file and reference it as external in others:
 
-**tsbridge-compose.yml (defines network):**
+**tailnet-compose.yml (defines network):**
 
 ```yaml
 services:
-  tsbridge:
+  tailnet:
     # ... config
     networks:
       - shared-network
 
 networks:
   shared-network:
-    name: tsbridge-shared
+    name: tailnet-shared
 ```
 
 **services-compose.yml (uses external network):**
@@ -349,32 +349,32 @@ services:
 networks:
   shared-network:
     external: true
-    name: tsbridge-shared
+    name: tailnet-shared
 ```
 
 ### Network Troubleshooting
 
 **Why does networking matter?**
 
-- tsbridge acts as a reverse proxy
+- tailnet acts as a reverse proxy
 - It needs to reach your service containers over the network
-- `localhost` inside tsbridge container ≠ service containers
+- `localhost` inside tailnet container ≠ service containers
 - Docker networks enable container-to-container communication
 
 **Common networking issues:**
 
 **Service not appearing?**
 
-- Check `tsbridge.enabled=true` is set
+- Check `tailnet.enabled=true` is set
 - Verify containers are on same network - use `docker network ls` and `docker inspect <container>`
-- Look at tsbridge logs with `--verbose`
+- Look at tailnet logs with `--verbose`
 
 **Connection refused?**
 
 - Don't use `localhost` - use `port` label instead
 - Make sure service is listening on the port
 - Check container is actually running
-- Verify network connectivity: `docker exec tsbridge-container ping service-container`
+- Verify network connectivity: `docker exec tailnet-container ping service-container`
 
 **Cross-compose networking not working?**
 

@@ -1,4 +1,4 @@
-module github.com/jtdowney/tsbridge
+module github.com/sudosu404/tailnet-cli
 
 go 1.25.1
 

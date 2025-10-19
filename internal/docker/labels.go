@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/jtdowney/tsbridge/internal/config"
-	"github.com/jtdowney/tsbridge/internal/errors"
+	"github.com/sudosu404/tailnet-cli/internal/config"
+	"github.com/sudosu404/tailnet-cli/internal/errors"
 )
 
 var (

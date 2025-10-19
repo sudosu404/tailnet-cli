@@ -1,14 +1,14 @@
-/var/log/tsbridge/*.log {
+/var/log/tailnet/*.log {
     daily
     rotate 14
     compress
     delaycompress
     missingok
     notifempty
-    create 0640 tsbridge tsbridge
+    create 0640 tailnet tailnet
     sharedscripts
     postrotate
-        # Send SIGHUP to tsbridge to reopen log files
-        systemctl reload tsbridge >/dev/null 2>&1 || true
+        # Send SIGHUP to tailnet to reopen log files
+        systemctl reload tailnet >/dev/null 2>&1 || true
     endscript
 }

@@ -10,7 +10,7 @@ import (
 
 	"net/netip"
 
-	"github.com/jtdowney/tsbridge/internal/constants"
+	"github.com/sudosu404/tailnet-cli/internal/constants"
 	"github.com/stretchr/testify/assert"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
