@@ -4,7 +4,7 @@ This document contains project-specific instructions for working on the tailnet 
 
 ## Project Overview
 
-tailnet is a Go-based proxy manager built on Tailscale's tsnet library. It allows multiple named services on a Tailnet to be configured via a single TOML file.
+Tailnet is a Go-based proxy manager built on Tailscale's tsnet library. It allows multiple named services on a Tailnet to be configured via a single TOML file.
 
 ## Testing Commands
 

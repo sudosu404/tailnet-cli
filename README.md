@@ -7,13 +7,13 @@
 
 <img src="assets/logo.png" alt="tailnet logo" width="320" />
 
-tailnet acts as a tsnet-powered reverse proxy, letting you expose multiple backend services on your Tailnet from a single process. It's designed for homelabs and development environments where you want the magic of Tailscale without the hassle of running a separate sidecar for every service.
+Tailnet CLI acts as a tailnet-powered reverse proxy, letting you expose multiple backend services on your own Tailnet from a single process. It's designed for homelabs and development environments where you want the magic of Tailscale without the hassle of running a separate sidecar for every service.
 
 Inspired by Traefik, tailnet can be configured with a simple TOML file or by watching Docker for container labels.
 
 ## Why?
 
-I got tired of spinning up a new [tsnsrv](https://github.com/boinkor-net/tsnsrv) instance for every service I wanted to expose on my Tailnet. Each one needs its own systemd service and configuration. With tailnet, you configure once and add services as needed - either through a config file or by just adding labels to your Docker containers.
+For start addding all go libs for tailcale that just shines.
 
 ## Install
 
